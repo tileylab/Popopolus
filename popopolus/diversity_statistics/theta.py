@@ -4,6 +4,7 @@ import pandas as pd
 import logging
 from popopolus.utils import assign_populations
 from popopolus.diversity_statistics.sfs import initialize_sfs
+from popopolus.diversity_statistics.sfs import occupy_sfs
 
 def estimate_wattersons(genotype_dat, tax_list, ind_map, intervals, output_dir):
     '''
@@ -22,23 +23,21 @@ def estimate_wattersons(genotype_dat, tax_list, ind_map, intervals, output_dir):
     logging.info(f'Estimating Watterson Theta:\n')
     populations = assign_populations(ind_map)
     sfs = initialize_sfs(populations)
-    # Only concern ourselves with the global calulcation for now. Will add per-interval later.
+    derived_sfs = occupy_sfs(populations, tax_list, genotype_dat, sfs)
+
+    # Watterson's theta is calculated as S / a1 where S is the number of segregating sites and a1 is the sum of 1/i for i from 1 to n-1 where n is the number of sites sampled.
+    # Ignoring variable ploidy among individuals for now
+    # Ignoring intervals for now
+    theta_results = []
     for pop_index, pop in enumerate(populations.keys()):
-        inds_in_pop = populations[pop]
-        ind_indices = [tax_list.index(ind) for ind in inds_in_pop if ind in tax_list]
-        logging.info(f'Calculating SFS for population: {pop} with {len(ind_indices)} individuals\n')
-        pop_genotype_dat = genotype_dat[0, :, ind_indices]
-        print(pop_genotype_dat.shape)
-        #print(len(pop_genotype_dat[0,:]))
-        #print(len(pop_genotype_dat[:,0]))
-        #print(pop_genotype_dat)
-        for site_index in range(len(pop_genotype_dat[0,:])):
-            genotypes = pop_genotype_dat[: , site_index]
-            # Quick fix for missing data but address weighting by variable sample size later
-            genotypes[genotypes == -1] = 0
-            # Count number of derived alleles (assuming 0, 1, 2 coding)
-            n_derived = np.sum(genotypes)
-            print(n_derived)
-            sfs[pop_index, n_derived] += 1
-    print(sfs)
-    return(0)
+        n_individuals = len(populations[pop])
+        n_chromosomes = 2 * n_individuals
+        S = np.sum(derived_sfs[pop_index, 1:n_chromosomes]) # Number of segregating sites is the sum of the SFS from 1 to n-1
+        n_sites = np.sum(derived_sfs[pop_index, :]) # Total number of sites is the sum of the SFS from 0 to n
+        a1 = np.sum(1 / np.arange(1, n_chromosomes))
+        theta = S / a1
+        theta_persite = theta / n_sites
+        theta_results.append({'population': pop, 'theta': theta_persite})
+    theta_df = pd.DataFrame(theta_results)
+    theta_df.to_csv(f'{output_dir}/wattersons_theta.csv', index=False)
+    return(theta_df)

@@ -144,7 +144,7 @@ def estimate_theta_watterson(sample_sheet, vcf_file, minimum_depth, minimum_coun
         theta_df = estimate_wattersons(genotype_dat, tax_list, ind_map, interval, output_dir)
         print(theta_df)
     else:
-        click.echo(f'Warning: Imputation method {imputation_method} is not supported. Skipping allele frequencies.')
+        click.echo(f'Warning: Imputation method {imputation_method} is not supported.')
     end_time = time.process_time()
     logging.info(f'End at {end_time}')
     compute_time = (end_time - start_time) / 60
