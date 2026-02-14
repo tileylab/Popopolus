@@ -1,4 +1,4 @@
-from popopolus.calculate_frequencies.calculate_frequencies import get_ind_freqs, get_pop_freqs
+from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes, get_ind_ab, get_pop_freqs
 from popopolus.calculate_frequencies.impute import average_missing, remove_missing
 
 """

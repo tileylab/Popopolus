@@ -31,6 +31,24 @@ def map_individuals(sample_sheet):
     #print(ind_map)
     return(ind_map)
 
+def assign_populations(ind_map):
+    '''
+    Returns a list of unique populations from the ind_map.
+
+    Parameters:
+        ind_map (dict): a dictionary mapping individuals in the VCF to a population or other identifier
+    Returns:
+        populations (dict): a dict of unique populations as keys and individuals in those populations as a list as values
+    '''
+    populations = {}
+    for ind in ind_map.keys():
+        pop = ind_map[ind]['population']
+        if pop not in populations.keys():
+            populations[pop] = [ind]
+        else:
+            populations[pop].append(ind)
+    return (populations)
+
 def get_vcf_dimensions(vcf_file, pate_flag, ind_map):
     """
     Get the number of individuals and number of sites from the vcf in order to get dimensions for allocation of numpy arrays.
