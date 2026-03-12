@@ -31,6 +31,22 @@ def map_individuals(sample_sheet):
     #print(ind_map)
     return(ind_map)
 
+def count_chromosomes(ind_list, ind_map):
+    '''
+    Returns a list of unique populations from the ind_map.
+
+    Parameters:
+        ind_list (list): a list of individuals for which to correct for ploidy 
+        ind_map (dict): a dictionary mapping individuals in the VCF to a population or other identifier
+    Returns:
+        populations (dict): a dict of unique populations as keys and individuals in those populations as a list as values
+    '''
+    n_chromosomes = 0
+    for ind in ind_list:
+        ploidy = ind_map[ind]['ploidy']
+        n_chromosomes = n_chromosomes + ploidy
+    return (n_chromosomes)
+
 def assign_populations(ind_map):
     '''
     Returns a list of unique populations from the ind_map.
