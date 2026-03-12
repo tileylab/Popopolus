@@ -119,15 +119,18 @@ def individual_genotypes(sample_sheet, vcf_file, minimum_depth, minimum_count, m
 @click.option('-l', '--interval', type=str, default='0', required=False,
               help = 'The window size and step size for calculating theta in the format window:step e.g., 10000:5000. The default of 0 will calculate genome-wide theta.'
 )
+@click.option('-u', '--folded', type=bool, default=True, required=False,
+              help = 'Whether to calculate folded or unfolded site frequency spectrum'
+)
 @click.option('-o', '--output_dir', type=str, default='dummy', required=False,
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
-def estimate_theta_watterson(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, interval, output_dir):
+def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, interval, folded, output_dir):
     from popopolus.utils import map_individuals
     from popopolus.utils import check_dir
     from popopolus.utils import get_vcf_dimensions
     from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.diversity_statistics.theta import estimate_wattersons
+    from popopolus.diversity_statistics.theta import estimate_thetas
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -141,7 +144,7 @@ def estimate_theta_watterson(sample_sheet, vcf_file, minimum_depth, minimum_coun
             check_dir(output_dir)
             logging.info(f'Matrix of allele frequencies for each individual will be written to: {output_dir}')
         tax_list, genotype_dat = get_ind_genotypes(n_sites, n_tax, ind_map, vcf_file, minimum_depth, minimum_count, minimum_quality, pass_flag, output_dir)
-        theta_df = estimate_wattersons(genotype_dat, tax_list, ind_map, interval, output_dir)
+        theta_df = estimate_thetas(genotype_dat, tax_list, ind_map, interval, folded, output_dir)
         print(theta_df)
     else:
         click.echo(f'Warning: Imputation method {imputation_method} is not supported.')
