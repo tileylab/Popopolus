@@ -63,10 +63,10 @@ def occupy_unfolded_sfs(populations, tax_list, genotype_dat, sfs):
         inds_in_pop = populations[pop]
         ind_indices = [tax_list.index(ind) for ind in inds_in_pop if ind in tax_list]
         logging.info(f'Calculating SFS for population: {pop} with {len(ind_indices)} individuals\n')
-        pop_genotype_dat = genotype_dat[0, :, ind_indices]
+        pop_genotype_dat = genotype_dat[0][:, ind_indices]
         logging.info(f'pop_genotype_dat shape: {pop_genotype_dat.shape}')
-        for site_index in range(len(pop_genotype_dat[0,:])):
-            genotypes = pop_genotype_dat[: , site_index]
+        for site_index in range(pop_genotype_dat.shape[0]):
+            genotypes = pop_genotype_dat[site_index, :].copy()
             # Quick fix for missing data but address weighting by variable sample size later
             # The imputation step should be done in the get_ind_freqs function but for now we will just set missing data to 0 (homozygous reference) and not worry about the bias this may introduce
             genotypes[genotypes == -1] = 0
@@ -94,16 +94,18 @@ def occupy_folded_sfs(populations, tax_list, genotype_dat, sfs):
         inds_in_pop = populations[pop]
         ind_indices = [tax_list.index(ind) for ind in inds_in_pop if ind in tax_list]
         logging.info(f'Calculating SFS for population: {pop} with {len(ind_indices)} individuals\n')
-        pop_genotype_dat = genotype_dat[0, :, ind_indices]
+        pop_genotype_dat = genotype_dat[0][:, ind_indices]
         logging.info(f'pop_genotype_dat shape: {pop_genotype_dat.shape}')
-        for site_index in range(len(pop_genotype_dat[0,:])):
-            genotypes = pop_genotype_dat[: , site_index]
+        for site_index in range(pop_genotype_dat.shape[0]):
+            genotypes = pop_genotype_dat[site_index, :].copy()
             # Quick fix for missing data but address weighting by variable sample size later
             # The imputation step should be done in the get_ind_freqs function but for now we will just set missing data to 0 (homozygous reference) and not worry about the bias this may introduce
             genotypes[genotypes == -1] = 0
             # Count number of derived alleles (assuming 0, 1, 2 coding)
             n_derived = np.sum(genotypes)
-            n_folded = min(n_derived, len(genotypes) - n_derived)  # Folded SFS
+            # Current genotype encoding is diploid dosage (0, 1, 2), so each sample contributes two chromosomes.
+            n_chromosomes = len(genotypes) * 2
+            n_folded = min(n_derived, n_chromosomes - n_derived)
             #print(n_derived)
             sfs[pop_index, n_folded] += 1
     logging.info(f'sfs:\n {sfs}')
