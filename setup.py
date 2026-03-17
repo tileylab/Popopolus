@@ -15,7 +15,7 @@ setup(
     python_requires=">=3.11",
     install_requires=[
         'pandas>=2.2.2',
-        'scikit-learn>=1.5.1',
+        'scikit-learn>=1.5.1,<1.8',
         'click>=8.1.7',
         'matplotlib>=3.10.5',
         'scipy>=1.15.2',

@@ -27,7 +27,7 @@ from datetime import datetime
 import logging
 import pandas as pd
 
-from build.lib.popopolus.utils import check_dir
+from popopolus.utils import check_dir
 
 #--------------------------------#
 # CLI ENTRY POINT
