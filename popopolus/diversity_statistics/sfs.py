@@ -53,7 +53,8 @@ def occupy_unfolded_sfs(populations, tax_list, genotype_dat, sfs):
     Parameters:
         populations (dict): a dict of unique populations as keys and individuals in those populations as a list as values
         tax_list (list): A list of individual names corresponding to the individual order of genotype_dat
-        genotype_dat (np.ndarray): a 2D numpy array of genotype data with shape (n_sites, n_individuals)
+        genotype_dat (np.ndarray): a 3D numpy array with shape (n_layers, n_sites, n_individuals);
+            layer 0 stores genotype dosage values used to construct the SFS
         sfs (ndarray): a numpy array of 1-d site frequency spectra for each population with shape (n_populations, max_sample_size + 1)
     Returns:
         sfs (ndarray): a numpy array of 1-d site frequency spectra for each population with shape (n_populations, max_sample_size + 1)
@@ -84,7 +85,8 @@ def occupy_folded_sfs(populations, tax_list, genotype_dat, sfs):
     Parameters:
         populations (dict): a dict of unique populations as keys and individuals in those populations as a list as values
         tax_list (list): A list of individual names corresponding to the individual order of genotype_dat
-        genotype_dat (np.ndarray): a 2D numpy array of genotype data with shape (n_sites, n_individuals)
+        genotype_dat (np.ndarray): a 3D numpy array with shape (n_layers, n_sites, n_individuals);
+            layer 0 stores genotype dosage values used to construct the SFS
         sfs (ndarray): a numpy array of 1-d site frequency spectra for each population with shape (n_populations, max_sample_size//2 + 1)
     Returns:
         sfs (ndarray): a numpy array of 1-d site frequency spectra for each population with shape (n_populations, max_sample_size//2 + 1)

@@ -8,13 +8,23 @@ import popopolus.diversity_statistics.theta as theta_module
 
 
 def _expected_metrics_from_sfs(sfs_row, n_chromosomes):
-    """Mirror the current estimate_thetas formulas for deterministic assertions."""
-    s = np.sum(sfs_row[1:n_chromosomes])
-    n_sites = np.sum(sfs_row)
-    i = np.arange(1, n_chromosomes)
+    """Compute expected metrics for unfolded (0..n) or folded (0..floor(n/2)) SFS."""
+    if len(sfs_row) == n_chromosomes + 1:
+        # Unfolded SFS: use segregating bins i=1..n-1.
+        segregating_bins = sfs_row[1:n_chromosomes]
+        allele_counts = np.arange(1, n_chromosomes)
+    else:
+        # Folded SFS: use bins i=1..floor(n/2) with same true chromosome count n.
+        max_folded_bin = n_chromosomes // 2
+        segregating_bins = sfs_row[1:max_folded_bin + 1]
+        allele_counts = np.arange(1, max_folded_bin + 1)
 
-    a1 = np.sum(1 / i)
-    a2 = np.sum(1 / (i**2))
+    s = np.sum(segregating_bins)
+    n_sites = np.sum(sfs_row)
+    harmonic_indices = np.arange(1, n_chromosomes)
+
+    a1 = np.sum(1 / harmonic_indices)
+    a2 = np.sum(1 / (harmonic_indices**2))
     b1 = (n_chromosomes + 1) / (3 * (n_chromosomes - 1))
     b2 = 2 * (n_chromosomes**2 + n_chromosomes + 3) / (9 * n_chromosomes * (n_chromosomes - 1))
     c1 = b1 - 1 / a1
@@ -24,7 +34,7 @@ def _expected_metrics_from_sfs(sfs_row, n_chromosomes):
     vd = e1 * s + e2 * s * (s - 1)
 
     theta_pi = (
-        np.sum(i * (n_chromosomes - i) * sfs_row[1:n_chromosomes])
+        np.sum(allele_counts * (n_chromosomes - allele_counts) * segregating_bins)
         / theta_module.combination(n_chromosomes, 2)
     )
     theta_w = s / a1
@@ -76,7 +86,7 @@ def test_estimate_thetas_unfolded_calculation(monkeypatch):
         assert theta_df.loc[0, "n_individuals"] == 4
         assert theta_df.loc[0, "n_chromosomes"] == 8
 
-        expected = _expected_metrics_from_sfs(expected_sfs[0], n_chromosomes=9)
+        expected = _expected_metrics_from_sfs(expected_sfs[0], n_chromosomes=8)
         _assert_close_or_both_nan(theta_df.loc[0, "theta_pi"], expected["theta_pi"])
         _assert_close_or_both_nan(theta_df.loc[0, "theta_wattersons"], expected["theta_wattersons"])
         _assert_close_or_both_nan(theta_df.loc[0, "tajima_D"], expected["tajima_D"])
@@ -116,9 +126,9 @@ def test_estimate_thetas_folded_calculation(monkeypatch):
         assert len(theta_df) == 1
         assert theta_df.loc[0, "population"] == "pop1"
         assert theta_df.loc[0, "n_individuals"] == 4
-        assert theta_df.loc[0, "n_chromosomes"] == 4
+        assert theta_df.loc[0, "n_chromosomes"] == 8
 
-        expected = _expected_metrics_from_sfs(expected_sfs[0], n_chromosomes=5)
+        expected = _expected_metrics_from_sfs(expected_sfs[0], n_chromosomes=8)
         _assert_close_or_both_nan(theta_df.loc[0, "theta_pi"], expected["theta_pi"])
         _assert_close_or_both_nan(theta_df.loc[0, "theta_wattersons"], expected["theta_wattersons"])
         _assert_close_or_both_nan(theta_df.loc[0, "tajima_D"], expected["tajima_D"])
