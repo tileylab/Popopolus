@@ -1,4 +1,6 @@
 # Popopolus
+[![CI](https://github.com/gtiley/popopolus/actions/workflows/ci-install.yml/badge.svg?branch=main)](https://github.com/gtiley/popopolus/actions/workflows/ci-install.yml)
+
 Python package for polyploid population genomics analyses and data exploration
 
 ## Disclaimer
@@ -14,12 +16,12 @@ conda activate popopolus
 The *environment.yml* file was created from the popopolus development environment with `conda env export --from-history > environment.yml`.
 
 ### Pip Install
-A *requirements.txt* file is provided for easy pip install of dependencies. This can be done system-wide or within a new conda environment. The pip installation is tested on Python versions 3.11 and 3.12 across ubuntu, macos, and windows.
+A pip installation can be done system-wide or within a new conda/venv environment. The recommended install path is to install from package metadata so dependency resolution stays platform-aware. This install path is tested on Python 3.11 and 3.12 across Ubuntu, macOS, and Windows.
 
 ```python
 python -m pip install --upgrade pip
-pip install -r requirements.txt
-pip install .
+python -m pip install --upgrade setuptools wheel
+python -m pip install .
 ```
 
-The *requirements.txt* file was created from within the environment with `pip list --format=freeze > requirements.txt`.
+If you need a fully pinned developer environment, `requirements.txt` is still available, but pinned transitive dependencies can be less portable across operating systems.
