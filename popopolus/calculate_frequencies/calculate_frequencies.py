@@ -145,12 +145,13 @@ def get_ind_genotypes(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, m
                 'position': site_position_data[:n_sites],
             }
         )
+        site_df['chromosome'] = site_df['chromosome'].astype('category')
         return(tax_list, genotype_dat, site_df)
     return(tax_list, genotype_dat)
 
-def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual, pass_flag, output_dir):
+def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual, pass_flag, output_dir, return_site_data=False):
     '''
-    Returns an np.array object of allele balance across sites for each individual from a multisample vcf.
+    Returns per-individual allele-balance and quality layers across sites from a multisample VCF.
 
     Parameters:
         n_sites (int): the number of sites to process from the VCF
@@ -165,7 +166,9 @@ def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual
 
     Returns:
         tax_list (list): A list of individual labels
-        ab_dat: a numpy array of allele balance data as well as depth, genotype quality, and filtering information
+        ab_dat: a numpy array with shape (4, n_sites, n_tax) where layers are allele balance,
+            depth, genotype quality, and pass-filter indicator
+        site_df (pd.DataFrame, optional): site-level coordinates and chromosome ids when return_site_data=True
     '''
     
     # Goal - these all need to be typed as arrays to keep the memory from exploding
@@ -174,8 +177,9 @@ def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual
     site_depth_data = np.empty((n_sites, n_tax), dtype=np.uint16)
     genotype_quality_data = np.empty((n_sites, n_tax), dtype=np.uint8)
     passing_filter_data = np.empty((n_sites, n_tax), dtype=np.bool_)
-    # chromosome_data = {}
-    # site_position_data = {}
+    chromosome_data = np.empty((n_sites,), dtype=np.uint16)
+    site_position_data = np.empty((n_sites,), dtype=np.uint32)
+    chromosome_label_data = np.empty((n_sites,), dtype=object)
     vcf_map = {}
     vcf_index = {}
     tax_list = []
@@ -183,6 +187,9 @@ def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual
     n_sites = 0
     n_variants = {}
     skip_header = 1
+
+    chromosome_map = {}
+    chromosome_count = 0
 
     with open(vcf_file,'r') as fh:
         for line in fh:
@@ -242,6 +249,16 @@ def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual
                                 genotype_quality_data[n_sites, vcf_index[vcf_map[i]]] = genotype_quality
                                 passing_filter_data[n_sites, vcf_index[vcf_map[i]]] = indicator
                                 n_variants[vcf_map[i]] = n_variants[vcf_map[i]] + 1
+                        chromosome = temp[0]
+                        position = temp[1]
+                        if chromosome not in chromosome_map.keys():
+                            chromosome_map[chromosome] = chromosome_count
+                            chromosome_count = chromosome_count + 1
+                            chromosome_data[n_sites] = int(chromosome_map[chromosome])
+                        elif chromosome in chromosome_map.keys():
+                            chromosome_data[n_sites] = int(chromosome_map[chromosome])
+                        chromosome_label_data[n_sites] = chromosome
+                        site_position_data[n_sites] = int(position)
                         n_sites = n_sites + 1
 
     if (output_dir != 'dummy'):
@@ -266,6 +283,17 @@ def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual
     logging.info(f'Array shape: {ab_dat.shape}')
     logging.info(f'Memory usage: {ab_dat.nbytes / 1024 / 1024:.2f} MB')
     logging.info(f'Processed VCF of {n_sites} for {n_tax}\n')
+    if return_site_data:
+        site_df = pd.DataFrame(
+            {
+                'site_index': np.arange(0, n_sites, dtype=np.int32),
+                'chromosome': chromosome_label_data[:n_sites],
+                'chromosome_id': chromosome_data[:n_sites],
+                'position': site_position_data[:n_sites],
+            }
+        )
+        site_df['chromosome'] = site_df['chromosome'].astype('category')
+        return(tax_list, ab_dat, site_df)
     return(tax_list, ab_dat)
 
 
