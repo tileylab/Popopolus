@@ -1,5 +1,5 @@
 # Popopolus
-[![CI](https://github.com/gtiley/popopolus/actions/workflows/ci-install.yml/badge.svg?branch=main)](https://github.com/gtiley/popopolus/actions/workflows/ci-install.yml)
+[![CI](https://github.com/tileylab/Popopolus/actions/workflows/ci-install.yml/badge.svg?branch=main)](https://github.com/tileylab/Popopolus/actions/workflows/ci-install.yml)
 
 Python package for polyploid population genomics analyses and data exploration
 
