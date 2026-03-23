@@ -94,3 +94,96 @@ def test_estimate_theta_windowing_integration(tmp_path, monkeypatch):
 
     windows_df = pd.read_csv(out_dir / "windows.csv")
     assert windows_df.shape[0] == 2
+
+
+def test_estimate_theta_bootstrap_only(tmp_path, monkeypatch):
+    """Bootstrap without rarefaction should produce bootstrap output files."""
+    runner = CliRunner()
+
+    def fake_map_individuals(_sample_sheet):
+        return {
+            "ind1": {"population": "pop1", "ploidy": 2},
+            "ind2": {"population": "pop1", "ploidy": 2},
+        }
+
+    def fake_get_vcf_dimensions(_vcf_file, _pass_flag, _ind_map):
+        return 3, 2
+
+    def fake_get_ind_genotypes(
+        _n_sites,
+        _n_tax,
+        _ind_map,
+        _vcf_file,
+        _min_depth,
+        _min_count,
+        _min_qual,
+        _pass_flag,
+        _output_dir,
+        return_site_data=False,
+    ):
+        tax_list = ["ind1", "ind2"]
+        genotype_dat = np.zeros((4, 3, 2), dtype=np.int8)
+        site_df = pd.DataFrame(
+            {
+                "site_index": [0, 1, 2],
+                "chromosome": ["chr1", "chr1", "chr1"],
+                "chromosome_id": [0, 0, 0],
+                "position": [10, 50, 160],
+            }
+        )
+        if return_site_data:
+            return tax_list, genotype_dat, site_df
+        return tax_list, genotype_dat
+
+    def fake_estimate_thetas(genotype_dat, _tax_list, _ind_map, _interval, _folded, _output_dir):
+        n_sites = int(genotype_dat.shape[1])
+        return pd.DataFrame(
+            [
+                {
+                    "population": "pop1",
+                    "n_individuals": 2,
+                    "n_chromosomes": 4,
+                    "theta_wattersons": float(n_sites),
+                    "theta_pi": float(n_sites),
+                    "tajima_D": 0.0,
+                }
+            ]
+        )
+
+    monkeypatch.setattr(utils_mod, "map_individuals", fake_map_individuals)
+    monkeypatch.setattr(utils_mod, "get_vcf_dimensions", fake_get_vcf_dimensions)
+    monkeypatch.setattr(calc_freq_mod, "get_ind_genotypes", fake_get_ind_genotypes)
+    monkeypatch.setattr(theta_mod, "estimate_thetas", fake_estimate_thetas)
+
+    out_dir = tmp_path / "theta_bootstrap_out"
+    result = runner.invoke(
+        popopolus_cli.cli,
+        [
+            "estimate-theta",
+            "samples.csv",
+            "-v",
+            "input.vcf",
+            "--bootstrap_replicates",
+            "3",
+            "--bootstrap_seed",
+            "42",
+            "-o",
+            str(out_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+
+    replicates_df = pd.read_csv(out_dir / "theta_bootstrap_replicates.csv")
+    assert "bootstrap" in replicates_df.columns
+    assert "replicate" in replicates_df.columns
+    assert replicates_df["bootstrap"].nunique() == 3
+    assert (replicates_df["replicate"] == 1).all()
+
+    summary_df = pd.read_csv(out_dir / "theta_bootstrap_summary.csv")
+    assert summary_df.shape[0] == 1
+    assert "theta_wattersons_mean" in summary_df.columns
+    assert "theta_wattersons_ci_lower" in summary_df.columns
+
+    assert not (out_dir / "rarefaction_samples.csv").exists()
+    assert not (out_dir / "theta.csv").exists()

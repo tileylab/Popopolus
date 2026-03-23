@@ -208,7 +208,7 @@ def individual_genotypes(sample_sheet, vcf_file, minimum_depth, minimum_count, m
               help = 'Allow <= target chromosomes if an exact subset is not possible for a population.'
 )
 @click.option('--bootstrap_replicates', type=int, default=0, required=False,
-              help = 'Bootstrap replicates per rarefied dataset for mean and 95% CI estimation. 0 disables bootstrapping.'
+              help = 'Number of bootstrap replicates (site resampling with replacement) for mean and 95%% CI estimation. Works with or without --rarefy. 0 disables bootstrapping.'
 )
 @click.option('--bootstrap_seed', type=int, default=None, required=False,
               help = 'Random seed for bootstrap site resampling.'
@@ -310,7 +310,7 @@ def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum
 
     site_df.to_csv(f'{output_dir}/site_coordinates.csv', index=False)
     logging.info(f'Wrote site coordinates for windowing: {output_dir}/site_coordinates.csv')
-    if rarefy:
+    if rarefy and bootstrap_replicates > 0:
         target = None if rarefy_target_chromosomes == 0 else rarefy_target_chromosomes
         replicate_datasets, rarefaction_df = rarefy_genotype_dataset(
             genotype_dat=genotype_dat,
@@ -322,83 +322,129 @@ def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum
             require_exact=(not rarefy_relax_exact),
         )
 
-        if bootstrap_replicates > 0:
-            theta_bootstrap_rows = []
-            for replicate_data in replicate_datasets:
-                rep = replicate_data['replicate']
-                rep_dir = f'{output_dir}/rarefaction_replicate_{rep}'
-                os.makedirs(rep_dir, exist_ok=True)
+        theta_bootstrap_rows = []
+        for replicate_data in replicate_datasets:
+            rep = replicate_data['replicate']
+            rep_dir = f'{output_dir}/rarefaction_replicate_{rep}'
+            os.makedirs(rep_dir, exist_ok=True)
 
-                rep_bootstrap_seed = None if bootstrap_seed is None else bootstrap_seed + rep
-                bootstrap_datasets = bootstrap_genotype_dataset(
-                    genotype_dat=replicate_data['genotype_dat'],
-                    n_bootstraps=bootstrap_replicates,
-                    seed=rep_bootstrap_seed,
-                )
+            rep_bootstrap_seed = None if bootstrap_seed is None else bootstrap_seed + rep
+            bootstrap_datasets = bootstrap_genotype_dataset(
+                genotype_dat=replicate_data['genotype_dat'],
+                n_bootstraps=bootstrap_replicates,
+                seed=rep_bootstrap_seed,
+            )
 
-                for bootstrap_data in bootstrap_datasets:
-                    boot = bootstrap_data['bootstrap']
-                    boot_dir = f'{rep_dir}/bootstrap_{boot}'
-                    os.makedirs(boot_dir, exist_ok=True)
-                    bootstrap_site_df = site_df.iloc[bootstrap_data['site_indices']].copy().reset_index(drop=True)
-                    bootstrap_site_df['site_index'] = bootstrap_site_df.index.astype(int)
+            for bootstrap_data in bootstrap_datasets:
+                boot = bootstrap_data['bootstrap']
+                boot_dir = f'{rep_dir}/bootstrap_{boot}'
+                os.makedirs(boot_dir, exist_ok=True)
+                bootstrap_site_df = site_df.iloc[bootstrap_data['site_indices']].copy().reset_index(drop=True)
+                bootstrap_site_df['site_index'] = bootstrap_site_df.index.astype(int)
 
-                    theta_df = run_theta_for_dataset(
-                        bootstrap_data['genotype_dat'],
-                        replicate_data['tax_list'],
-                        replicate_data['ind_map'],
-                        bootstrap_site_df,
-                        boot_dir,
-                    )
-                    theta_df.insert(0, 'bootstrap', boot)
-                    theta_df.insert(0, 'replicate', rep)
-                    theta_bootstrap_rows.append(theta_df)
-
-            theta_bootstrap_df = pd.concat(theta_bootstrap_rows, ignore_index=True)
-            theta_bootstrap_df.to_csv(f'{output_dir}/theta_rarefied_bootstrap_replicates.csv', index=False)
-
-            theta_bootstrap_summary_df = summarize_bootstrap_theta(theta_bootstrap_df)
-            theta_bootstrap_summary_df.to_csv(f'{output_dir}/theta_rarefied_bootstrap_summary.csv', index=False)
-            rarefaction_df.to_csv(f'{output_dir}/rarefaction_samples.csv', index=False)
-            print(theta_bootstrap_summary_df)
-        else:
-            theta_replicates = []
-            for replicate_data in replicate_datasets:
-                rep = replicate_data['replicate']
-                rep_dir = f'{output_dir}/rarefaction_replicate_{rep}'
-                os.makedirs(rep_dir, exist_ok=True)
                 theta_df = run_theta_for_dataset(
-                    replicate_data['genotype_dat'],
+                    bootstrap_data['genotype_dat'],
                     replicate_data['tax_list'],
                     replicate_data['ind_map'],
-                    site_df,
-                    rep_dir,
+                    bootstrap_site_df,
+                    boot_dir,
                 )
+                theta_df.insert(0, 'bootstrap', boot)
                 theta_df.insert(0, 'replicate', rep)
-                theta_replicates.append(theta_df)
+                theta_bootstrap_rows.append(theta_df)
 
-            theta_replicates_df = pd.concat(theta_replicates, ignore_index=True)
-            theta_replicates_df.to_csv(f'{output_dir}/theta_rarefied_replicates.csv', index=False)
+        theta_bootstrap_df = pd.concat(theta_bootstrap_rows, ignore_index=True)
+        theta_bootstrap_df.to_csv(f'{output_dir}/theta_rarefied_bootstrap_replicates.csv', index=False)
 
-            summary_group_cols = ['population']
-            for col in ['window_id', 'chromosome', 'start', 'end']:
-                if col in theta_replicates_df.columns:
-                    summary_group_cols.append(col)
+        theta_bootstrap_summary_df = summarize_bootstrap_theta(theta_bootstrap_df)
+        theta_bootstrap_summary_df.to_csv(f'{output_dir}/theta_rarefied_bootstrap_summary.csv', index=False)
+        rarefaction_df.to_csv(f'{output_dir}/rarefaction_samples.csv', index=False)
+        print(theta_bootstrap_summary_df)
 
-            theta_summary_df = theta_replicates_df.groupby(summary_group_cols, as_index=False).agg(
-                n_replicates=('replicate', 'nunique'),
-                n_individuals_mean=('n_individuals', 'mean'),
-                n_chromosomes_mean=('n_chromosomes', 'mean'),
-                theta_wattersons_mean=('theta_wattersons', 'mean'),
-                theta_wattersons_sd=('theta_wattersons', 'std'),
-                theta_pi_mean=('theta_pi', 'mean'),
-                theta_pi_sd=('theta_pi', 'std'),
-                tajima_D_mean=('tajima_D', 'mean'),
-                tajima_D_sd=('tajima_D', 'std'),
+    elif rarefy:
+        target = None if rarefy_target_chromosomes == 0 else rarefy_target_chromosomes
+        replicate_datasets, rarefaction_df = rarefy_genotype_dataset(
+            genotype_dat=genotype_dat,
+            tax_list=tax_list,
+            ind_map=ind_map,
+            n_replicates=rarefy_replicates,
+            target_chromosomes=target,
+            seed=rarefy_seed,
+            require_exact=(not rarefy_relax_exact),
+        )
+
+        theta_replicates = []
+        for replicate_data in replicate_datasets:
+            rep = replicate_data['replicate']
+            rep_dir = f'{output_dir}/rarefaction_replicate_{rep}'
+            os.makedirs(rep_dir, exist_ok=True)
+            theta_df = run_theta_for_dataset(
+                replicate_data['genotype_dat'],
+                replicate_data['tax_list'],
+                replicate_data['ind_map'],
+                site_df,
+                rep_dir,
             )
-            theta_summary_df.to_csv(f'{output_dir}/theta_rarefied_summary.csv', index=False)
-            rarefaction_df.to_csv(f'{output_dir}/rarefaction_samples.csv', index=False)
-            print(theta_summary_df)
+            theta_df.insert(0, 'replicate', rep)
+            theta_replicates.append(theta_df)
+
+        theta_replicates_df = pd.concat(theta_replicates, ignore_index=True)
+        theta_replicates_df.to_csv(f'{output_dir}/theta_rarefied_replicates.csv', index=False)
+
+        summary_group_cols = ['population']
+        for col in ['window_id', 'chromosome', 'start', 'end']:
+            if col in theta_replicates_df.columns:
+                summary_group_cols.append(col)
+
+        theta_summary_df = theta_replicates_df.groupby(summary_group_cols, as_index=False).agg(
+            n_replicates=('replicate', 'nunique'),
+            n_individuals_mean=('n_individuals', 'mean'),
+            n_chromosomes_mean=('n_chromosomes', 'mean'),
+            theta_wattersons_mean=('theta_wattersons', 'mean'),
+            theta_wattersons_sd=('theta_wattersons', 'std'),
+            theta_pi_mean=('theta_pi', 'mean'),
+            theta_pi_sd=('theta_pi', 'std'),
+            tajima_D_mean=('tajima_D', 'mean'),
+            tajima_D_sd=('tajima_D', 'std'),
+        )
+        theta_summary_df.to_csv(f'{output_dir}/theta_rarefied_summary.csv', index=False)
+        rarefaction_df.to_csv(f'{output_dir}/rarefaction_samples.csv', index=False)
+        print(theta_summary_df)
+
+    elif bootstrap_replicates > 0:
+        bootstrap_datasets = bootstrap_genotype_dataset(
+            genotype_dat=genotype_dat,
+            n_bootstraps=bootstrap_replicates,
+            seed=bootstrap_seed,
+        )
+
+        theta_bootstrap_rows = []
+        for bootstrap_data in bootstrap_datasets:
+            boot = bootstrap_data['bootstrap']
+            boot_dir = f'{output_dir}/bootstrap_{boot}'
+            os.makedirs(boot_dir, exist_ok=True)
+
+            bootstrap_site_df = site_df.iloc[bootstrap_data['site_indices']].copy().reset_index(drop=True)
+            bootstrap_site_df['site_index'] = bootstrap_site_df.index.astype(int)
+
+            theta_df = run_theta_for_dataset(
+                bootstrap_data['genotype_dat'],
+                tax_list,
+                ind_map,
+                bootstrap_site_df,
+                boot_dir,
+            )
+            theta_df.insert(0, 'bootstrap', boot)
+            theta_bootstrap_rows.append(theta_df)
+
+        theta_bootstrap_df = pd.concat(theta_bootstrap_rows, ignore_index=True)
+        theta_bootstrap_df.insert(0, 'replicate', 1)
+        theta_bootstrap_df.to_csv(f'{output_dir}/theta_bootstrap_replicates.csv', index=False)
+
+        theta_bootstrap_summary_df = summarize_bootstrap_theta(theta_bootstrap_df)
+        theta_bootstrap_summary_df.to_csv(f'{output_dir}/theta_bootstrap_summary.csv', index=False)
+        print(theta_bootstrap_summary_df)
+
     else:
         theta_df = run_theta_for_dataset(genotype_dat, tax_list, ind_map, site_df, output_dir)
         theta_df.to_csv(f'{output_dir}/theta.csv', index=False)
@@ -523,6 +569,136 @@ def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimu
         click.echo(f'Warning: Imputation method {imputation_method} is not supported. Skipping allele frequencies.')
     end_time = time.process_time()
     logging.info(f'End at {end_time}')
+    compute_time = (end_time - start_time) / 60
+    logging.info(f'Total compute time was {compute_time} minutes')
+
+#----------------
+# Population-level allele frequencies
+#----------------
+@cli.command(context_settings={'help_option_names': ['-h','--help']})
+@click.argument('sample_sheet',type=str)
+@click.option('-v', '--vcf_file', type=str, default='dummy.vcf', required=True,
+              help = 'name of the input vcf file. should not be compressed.'
+)
+@click.option('-i', '--imputation_method', type=str, default='skip', required=False,
+              help = 'Missing-data handling method. Options: skip, mean, popmean, learn, random, zeros, remove.'
+)
+@click.option('-d', '--minimum_depth', type=int, default=10, required=False,
+              help = 'The minimum depth of a site to be treated as data'
+)
+@click.option('-c', '--minimum_count', type=int, default=3, required=False,
+              help = 'The minimum count of the minor allele for a site to be treated as data'
+)
+@click.option('-q', '--minimum_quality', type=int, default=20, required=False,
+              help = 'The minimum phred-scaled genotype quality score'
+)
+@click.option('-f', '--pass_flag', type=str, default='PASS', required=False,
+              help = 'Does the VCF have an PASS field or something else to condider like a "."'
+)
+@click.option('-o', '--output_dir', type=str, default='dummy', required=False,
+              help = 'name of the directory where population_frequencies.csv will be written'
+)
+def population_frequencies(sample_sheet, vcf_file, imputation_method, minimum_depth, minimum_count, minimum_quality, pass_flag, output_dir):
+    from popopolus.utils import map_individuals
+    from popopolus.utils import get_vcf_dimensions
+    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from popopolus.calculate_frequencies.calculate_frequencies import get_pop_freqs
+    from popopolus.calculate_frequencies.impute import apply_missing_imputation
+
+    start_time = time.process_time()
+    ind_map = map_individuals(sample_sheet)
+    n_sites, n_tax = get_vcf_dimensions(vcf_file, pass_flag, ind_map)
+    logging.info(f'VCF dimensions: {n_sites} sites, {n_tax} individuals')
+
+    if (output_dir != 'dummy'):
+        check_dir(output_dir)
+    else:
+        os.makedirs(output_dir, exist_ok=True)
+
+    tax_list, genotype_dat, site_df = get_ind_genotypes(
+        n_sites, n_tax, ind_map, vcf_file,
+        minimum_depth, minimum_count, minimum_quality, pass_flag,
+        'dummy', return_site_data=True,
+    )
+
+    try:
+        imputation_result = apply_missing_imputation(
+            genotype_dat,
+            method=imputation_method,
+            tax_list=tax_list,
+            ind_map=ind_map,
+            site_df=site_df,
+            in_place=True,
+        )
+        if str(imputation_method).strip().lower() == 'remove':
+            genotype_dat, site_df = imputation_result
+        else:
+            genotype_dat = imputation_result
+    except ValueError:
+        click.echo(f'Warning: Imputation method {imputation_method} is not supported.')
+        end_time = time.process_time()
+        logging.info(f'End at {end_time}')
+        compute_time = (end_time - start_time) / 60
+        logging.info(f'Total compute time was {compute_time} minutes')
+        return
+
+    freq_df = get_pop_freqs(genotype_dat, tax_list, ind_map, site_df)
+    freq_df.to_csv(f'{output_dir}/population_frequencies.csv')
+
+    click.echo(f'Wrote {output_dir}/population_frequencies.csv')
+    click.echo(f'  {freq_df.shape[0]} populations, {freq_df.shape[1]} loci')
+    print(freq_df)
+    end_time = time.process_time()
+    compute_time = (end_time - start_time) / 60
+    logging.info(f'Total compute time was {compute_time} minutes')
+
+#----------------
+# VCF to STRUCTURE conversion
+#----------------
+@cli.command(context_settings={'help_option_names': ['-h','--help']})
+@click.argument('sample_sheet',type=str)
+@click.option('-v', '--vcf_file', type=str, default='dummy.vcf', required=True,
+              help = 'name of the input vcf file. should not be compressed.'
+)
+@click.option('-d', '--minimum_depth', type=int, default=10, required=False,
+              help = 'The minimum depth of a site to be treated as data'
+)
+@click.option('-c', '--minimum_count', type=int, default=3, required=False,
+              help = 'The minimum count of the minor allele for a site to be treated as data'
+)
+@click.option('-q', '--minimum_quality', type=int, default=20, required=False,
+              help = 'The minimum phred-scaled genotype quality score'
+)
+@click.option('-f', '--pass_flag', type=str, default='PASS', required=False,
+              help = 'Does the VCF have an PASS field or something else to condider like a "."'
+)
+@click.option('-o', '--output_file', type=str, default='output.str', required=False,
+              help = 'Path for the STRUCTURE-format output file.'
+)
+def vcf_to_structure(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, pass_flag, output_file):
+    from popopolus.utils import map_individuals
+    from popopolus.utils import get_vcf_dimensions
+    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from popopolus.conversion.structure import build_structure_matrix
+    from popopolus.conversion.structure import write_structure_file
+
+    start_time = time.process_time()
+    ind_map = map_individuals(sample_sheet)
+    n_sites, n_tax = get_vcf_dimensions(vcf_file, pass_flag, ind_map)
+    logging.info(f'VCF dimensions: {n_sites} sites, {n_tax} individuals')
+
+    tax_list, genotype_dat, site_df = get_ind_genotypes(
+        n_sites, n_tax, ind_map, vcf_file,
+        minimum_depth, minimum_count, minimum_quality, pass_flag,
+        'dummy', return_site_data=True,
+    )
+
+    locus_labels, data_rows = build_structure_matrix(genotype_dat, tax_list, ind_map, site_df)
+    write_structure_file(locus_labels, data_rows, output_file)
+
+    click.echo(f'Wrote STRUCTURE file: {output_file}')
+    click.echo(f'  {len(locus_labels)} loci, {len(data_rows)} rows')
+    end_time = time.process_time()
     compute_time = (end_time - start_time) / 60
     logging.info(f'Total compute time was {compute_time} minutes')
 

@@ -123,3 +123,32 @@ def test_summarize_bootstrap_theta_returns_ci_columns():
     assert "theta_pi_ci_upper" in summary.columns
     assert "tajima_D_ci_lower" in summary.columns
     assert "tajima_D_ci_upper" in summary.columns
+
+
+def test_summarize_bootstrap_theta_with_constant_replicate():
+    """Test that summarize_bootstrap_theta works when replicate is constant (bootstrap-only mode)."""
+    rows = []
+    for boot in range(1, 6):
+        rows.append(
+            {
+                "replicate": 1,
+                "bootstrap": boot,
+                "population": "popA",
+                "n_individuals": 3,
+                "n_chromosomes": 6,
+                "theta_wattersons": 0.05 * boot,
+                "theta_pi": 0.06 * boot,
+                "tajima_D": -0.1 * boot,
+            }
+        )
+    df = pd.DataFrame(rows)
+
+    summary = summarize_bootstrap_theta(df)
+
+    assert summary.shape[0] == 1
+    assert summary.loc[0, "replicate"] == 1
+    assert summary.loc[0, "n_bootstraps"] == 5
+    assert "theta_wattersons_mean" in summary.columns
+    assert "theta_wattersons_sd" in summary.columns
+    assert "theta_wattersons_ci_lower" in summary.columns
+    assert "theta_wattersons_ci_upper" in summary.columns

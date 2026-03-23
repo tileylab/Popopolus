@@ -33,6 +33,8 @@ def get_ind_genotypes(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, m
     chromosome_data = np.empty((n_sites,), dtype=np.uint16)
     site_position_data = np.empty((n_sites,), dtype=np.uint32)
     chromosome_label_data = np.empty((n_sites,), dtype=object)
+    ref_allele_data = np.empty((n_sites,), dtype='U1')
+    alt_allele_data = np.empty((n_sites,), dtype='U1')
     vcf_map = {}
     vcf_index = {}
     tax_list = []
@@ -106,6 +108,8 @@ def get_ind_genotypes(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, m
                                 n_variants[vcf_map[i]] = n_variants[vcf_map[i]] + 1
                         chromosome = temp[0]
                         position = temp[1]
+                        ref_allele_data[n_sites] = temp[3]
+                        alt_allele_data[n_sites] = temp[4].split(',')[0]
                         if chromosome not in chromosome_map.keys():
                             chromosome_map[chromosome] = chromosome_count
                             chromosome_count = chromosome_count + 1
@@ -143,6 +147,8 @@ def get_ind_genotypes(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, m
                 'chromosome': chromosome_label_data[:n_sites],
                 'chromosome_id': chromosome_data[:n_sites],
                 'position': site_position_data[:n_sites],
+                'ref_allele': ref_allele_data[:n_sites],
+                'alt_allele': alt_allele_data[:n_sites],
             }
         )
         site_df['chromosome'] = site_df['chromosome'].astype('category')
@@ -297,5 +303,54 @@ def get_ind_ab(n_sites, n_tax, ind_map, vcf_file, min_depth, min_count, min_qual
     return(tax_list, ab_dat)
 
 
-def get_pop_freqs (ind_map, vcf_file, min_depth, min_count, output_file):
-    pass
+def get_pop_freqs(genotype_dat, tax_list, ind_map, site_df):
+    '''
+    Calculate population-level allele frequencies from individual genotype dosages.
+
+    Parameters:
+        genotype_dat (np.ndarray): shape (4, n_sites, n_taxa), layer 0 is dosage, layer 3 is pass-filter
+        tax_list (list): individual IDs aligned to genotype_dat axis 2
+        ind_map (dict): individual metadata with 'population' and 'ploidy' keys
+        site_df (pd.DataFrame): site-level coordinates with 'chromosome' and 'position' columns
+
+    Returns:
+        freq_df (pd.DataFrame): wide matrix with populations as rows and locus labels as columns
+    '''
+    from popopolus.utils import assign_populations
+
+    tax_index = {tax: idx for idx, tax in enumerate(tax_list)}
+    populations = assign_populations(ind_map)
+    sorted_pops = sorted(populations.keys())
+
+    n_sites = genotype_dat.shape[1]
+    dosage_layer = genotype_dat[0]
+    pass_layer = genotype_dat[3]
+
+    locus_labels = [
+        f"{site_df.iloc[i]['chromosome']}_{site_df.iloc[i]['position']}"
+        for i in range(n_sites)
+    ]
+
+    freq_data = {}
+    for pop in sorted_pops:
+        members = populations[pop]
+        member_indices = np.array([tax_index[tax] for tax in members if tax in tax_index])
+        ploidies = np.array([int(ind_map[tax]['ploidy']) for tax in members if tax in tax_index])
+
+        pop_dosages = dosage_layer[:, member_indices].astype(np.float64)
+        pop_passing = pass_layer[:, member_indices].astype(np.float64)
+
+        # Only count individuals that pass filters at each site
+        valid_dosages = np.where(pop_passing > 0, pop_dosages, 0.0)
+        valid_ploidies = pop_passing * ploidies[np.newaxis, :]
+
+        sum_dosages = valid_dosages.sum(axis=1)
+        sum_ploidies = valid_ploidies.sum(axis=1)
+
+        with np.errstate(invalid='ignore'):
+            freqs = np.where(sum_ploidies > 0, sum_dosages / sum_ploidies, np.nan)
+        freq_data[pop] = freqs
+
+    freq_df = pd.DataFrame(freq_data, index=locus_labels).T
+    freq_df.index.name = 'population'
+    return freq_df
