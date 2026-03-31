@@ -187,3 +187,38 @@ def test_estimate_theta_bootstrap_only(tmp_path, monkeypatch):
 
     assert not (out_dir / "rarefaction_samples.csv").exists()
     assert not (out_dir / "theta.csv").exists()
+
+
+def test_estimate_theta_zero_sites_guardrail(tmp_path, monkeypatch):
+    runner = CliRunner()
+
+    def fake_map_individuals(_sample_sheet):
+        return {
+            "ind1": {"population": "pop1", "ploidy": 2},
+            "ind2": {"population": "pop1", "ploidy": 2},
+        }
+
+    def fake_get_vcf_dimensions(_vcf_file, _pass_flag, _ind_map):
+        return 0, 2
+
+    monkeypatch.setattr(utils_mod, "map_individuals", fake_map_individuals)
+    monkeypatch.setattr(utils_mod, "get_vcf_dimensions", fake_get_vcf_dimensions)
+
+    out_dir = tmp_path / "theta_zero_sites"
+    result = runner.invoke(
+        popopolus_cli.cli,
+        [
+            "estimate-theta",
+            "samples.csv",
+            "-v",
+            "input.vcf",
+            "-f",
+            ".",
+            "-o",
+            str(out_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "No variants passed filter" in result.output
+    assert not (out_dir / "theta.csv").exists()

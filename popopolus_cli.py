@@ -267,6 +267,15 @@ def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum
     ind_map = map_individuals(sample_sheet)
     logging.info(f'Checking dimensions of VCF')
     n_sites, n_tax = get_vcf_dimensions(vcf_file, pass_flag, ind_map)
+    if n_sites == 0:
+        click.echo(
+            f'No variants passed filter "{pass_flag}" in {vcf_file}. '
+            'No theta results were generated.'
+        )
+        logging.warning(
+            f'No variants passed filter "{pass_flag}" in {vcf_file}; skipping theta estimation.'
+        )
+        return
     logging.info(f'Calculating individual allele frequencies from {vcf_file}')
     if (output_dir != 'dummy'):
         check_dir(output_dir)
@@ -286,6 +295,8 @@ def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum
         output_dir,
         return_site_data=True,
     )
+
+    print(f'Initial genotype data shape (layers, sites, individuals): {genotype_dat.shape}')
 
     try:
         imputation_result = apply_missing_imputation(
