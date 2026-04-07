@@ -477,17 +477,16 @@ def evaluate_logistic_regression_model(
         zero_division=0,
     )
 
+    accuracy_df = pd.DataFrame(
+        {"accuracy": [accuracy_score(label_series, predicted_labels)],
+         "balanced_accuracy": [balanced_accuracy_score(label_series, predicted_labels)],
+         "macro_f1": [f1_score(label_series, predicted_labels, average="macro", zero_division=0)],
+         "weighted_f1": [f1_score(label_series, predicted_labels, average="weighted", zero_division=0)]
+         }
+    )           
+
     return {
-        "accuracy": float(accuracy_score(label_series, predicted_labels)),
-        "balanced_accuracy": float(
-            balanced_accuracy_score(label_series, predicted_labels)
-        ),
-        "macro_f1": float(
-            f1_score(label_series, predicted_labels, average="macro", zero_division=0)
-        ),
-        "weighted_f1": float(
-            f1_score(label_series, predicted_labels, average="weighted", zero_division=0)
-        ),
+        "accuracy_df": accuracy_df,
         "classification_report": report,
         "classification_report_df": pd.DataFrame(report).transpose(),
         "confusion_matrix": confusion_df,
@@ -590,17 +589,16 @@ def cross_validate_logistic_regression(
         zero_division=0,
     )
 
+    accuracy_df = pd.DataFrame(
+        {"accuracy": [accuracy_score(label_series, predicted_labels)],
+         "balanced_accuracy": [balanced_accuracy_score(label_series, predicted_labels)],
+         "macro_f1": [f1_score(label_series, predicted_labels, average="macro", zero_division=0)],
+         "weighted_f1": [f1_score(label_series, predicted_labels, average="weighted", zero_division=0)]
+         }
+    )
+
     return {
-        "accuracy": float(accuracy_score(label_series, predicted_labels)),
-        "balanced_accuracy": float(
-            balanced_accuracy_score(label_series, predicted_labels)
-        ),
-        "macro_f1": float(
-            f1_score(label_series, predicted_labels, average="macro", zero_division=0)
-        ),
-        "weighted_f1": float(
-            f1_score(label_series, predicted_labels, average="weighted", zero_division=0)
-        ),
+        "accuracy_df": accuracy_df,
         "classification_report": report,
         "classification_report_df": pd.DataFrame(report).transpose(),
         "confusion_matrix": confusion_df,
@@ -647,10 +645,38 @@ def logistic_regression(
         how="left",
     ).join(prediction_df)
 
+    ####
+    # Evaluate performance with cross-validation on the training set
+    cv_results = cross_validate_logistic_regression(train_features, train_labels)
+    cv_report_df = cv_results["classification_report_df"]
+    print("Cross-validation classification report:")
+    print(cv_report_df)
+    print("Cross-validation confusion matrix:")
+    print(cv_results["confusion_matrix"])
+    print("Accuracy Stats:")
+    print(cv_results["accuracy_df"])
+    #print(f'Accuracy: {cv_results["accuracy"]}'
+    #      f'Balanced Accuracy: {cv_results["balanced_accuracy"]}'
+    #      f'Macro F1: {cv_results["macro_f1"]}'
+    #      f'Weighted F1: {cv_results["weighted_f1"]}')
+    ####
+
+    ####
+    # Print out predictions and performance metircs to the output directory
     if output_dir != "dummy":
         output_path = Path(output_dir) / "logistic_regression_predictions.csv"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         results_df.to_csv(output_path)
+        cv_report_path = Path(output_dir) / "logistic_regression_cv_report.csv"
+        cv_report_path.parent.mkdir(parents=True, exist_ok=True)
+        cv_report_df.to_csv(cv_report_path)
+        confusion_matrix_path = Path(output_dir) / "logistic_regression_cv_confusion_matrix.csv"
+        confusion_matrix_path.parent.mkdir(parents=True, exist_ok=True)
+        cv_results["confusion_matrix"].to_csv(confusion_matrix_path)
+        accuracy_df_path = Path(output_dir) / "logistic_regression_cv_accuracy.csv"
+        accuracy_df_path.parent.mkdir(parents=True, exist_ok=True)
+        cv_results["accuracy_df"].to_csv(accuracy_df_path)
+    ####
 
     return results_df
 
