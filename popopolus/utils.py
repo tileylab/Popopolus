@@ -65,11 +65,15 @@ def assign_populations(ind_map):
             populations[pop].append(ind)
     return (populations)
 
-def get_vcf_dimensions(vcf_file, pate_flag, ind_map):
+def get_vcf_dimensions(vcf_file, pass_flag, ind_map):
     """
     Get the number of individuals and number of sites from the vcf in order to get dimensions for allocation of numpy arrays.
     Perform an additional check to ensure that all individuals specified in the ind_map are present in the vcf.
     """
+    # Backward compatibility: older call sites passed a bool here.
+    include_dot_filter = pass_flag is True
+    pass_filter = str(pass_flag)
+
     n_tax = 0
     n_sites = 0
     skip_header = 1
@@ -83,10 +87,10 @@ def get_vcf_dimensions(vcf_file, pate_flag, ind_map):
                 for i in range(9, len(temp)):
                     this_tax = ''
                     if '/' in temp[i]:
-                        if pate_flag == False:
+                        if include_dot_filter is False:
                             tax_path = temp[i].split('/')
                             this_tax = tax_path[-1]
-                        elif pate_flag == True:
+                        elif include_dot_filter is True:
                             tax_path = temp[i].split('/')
                             this_tax = tax_path[-2]
                     else:
@@ -99,7 +103,7 @@ def get_vcf_dimensions(vcf_file, pate_flag, ind_map):
             else:
                 if skip_header == 0:
                     temp = line.split()
-                    if (temp[6] == 'PASS' or ((pate_flag == True) and temp[6] == '.')):
+                    if temp[6] == pass_filter or (include_dot_filter and temp[6] == '.'):
                         n_sites = n_sites + 1
     if n_tax < len(ind_map.keys()):
         logging.warning('Not all indivuals in mapping file are present in VCF. Checking for mismatches...')
