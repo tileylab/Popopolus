@@ -1,5 +1,9 @@
-from popopolus.classify_ploidy import logistic_regression
+"""Ploidy classification tools for multisample VCF-derived features.
 
+This package supports ploidy classification of individuals using logistic
+regression with partially known ploidy labels.
 """
-Classify ploidy of individuals from a multisample vcf using logistic regression and partial known ploidy data.
-"""
+
+from . import logistic_regression
+
+__all__ = ["logistic_regression"]

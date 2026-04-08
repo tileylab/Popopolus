@@ -14,6 +14,7 @@ setup(
     packages=find_packages(include=["popopolus","popopolus.*"]),
     python_requires=">=3.11",
     install_requires=[
+        'cyvcf2>=0.31.1',
         'pandas>=2.2.2',
         'scikit-learn>=1.5.1,<1.8',
         'click>=8.1.7',
