@@ -67,7 +67,7 @@ jobs:
       - name: Install with conda
         shell: bash -el {0}
         run: |
-          conda env create -f environment.yml
+          conda env create -f environment.yml python=${{ matrix.python-version }}
           conda activate popopolus
           pip install pytest pytest-cov
 
