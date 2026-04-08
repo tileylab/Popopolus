@@ -23,12 +23,10 @@ jobs:
 
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v4
-        with:
-            token: ${{ secrets.GH_PAT }}
+        uses: actions/checkout@v6
     
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -57,9 +55,7 @@ jobs:
 
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v4
-        with:
-            token: ${{ secrets.GH_PAT }}
+        uses: actions/checkout@v6
 
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
@@ -71,8 +67,10 @@ jobs:
       - name: Install with conda
         shell: bash -el {0}
         run: |
-          conda env create -f environment.yml
+          conda create -n popopolus python=${{ matrix.python-version }} -y
           conda activate popopolus
+          conda install -y numpy pandas scikit-learn click matplotlib scipy seaborn statsmodels pip setuptools wheel
+          pip install .
           pip install pytest pytest-cov
 
       - name: Check help menu
