@@ -32,6 +32,8 @@ DEFAULT_EXPECTED_BINS: tuple[float, ...] = (
     0.80,
 )
 DEFAULT_HETEROZYGOSITY_COLUMN = "heterozygosity_rate"
+DEFAULT_MEAN_AB_COLUMN = "mean_ab"
+DEFAULT_MEDIAN_AB_COLUMN = "median_ab"
 DEFAULT_LABEL_COLUMN = "ploidy"
 DEFAULT_SAMPLE_ID_COLUMN = "sample_id"
 DEFAULT_TOTAL_HET_COLUMN = "total_het_sites"
@@ -260,6 +262,19 @@ def extract_allele_balance_features(
     ]
     feature_df[DEFAULT_TOTAL_HET_COLUMN] = feature_df[bin_columns].sum(axis=1)
 
+    feature_df[DEFAULT_MEAN_AB_COLUMN] = [
+        float(np.mean(individual_ratios[sample_id]))
+        if individual_ratios[sample_id]
+        else np.nan
+        for sample_id in feature_df.index
+    ]
+    feature_df[DEFAULT_MEDIAN_AB_COLUMN] = [
+        float(np.median(individual_ratios[sample_id]))
+        if individual_ratios[sample_id]
+        else np.nan
+        for sample_id in feature_df.index
+    ]
+
     denominator = feature_df[DEFAULT_TOTAL_HET_COLUMN].replace(0, np.nan)
     for bin_column in bin_columns:
         feature_df[f"{bin_column}_prop"] = feature_df[bin_column] / denominator
@@ -325,6 +340,10 @@ def prepare_feature_columns(
                 "heterozygosity",
             )
             selected_columns.append(heterozygosity_column)
+
+        for ab_summary_column in (DEFAULT_MEAN_AB_COLUMN, DEFAULT_MEDIAN_AB_COLUMN):
+            if ab_summary_column in prepared_df.columns:
+                selected_columns.append(ab_summary_column)
 
     features = _coerce_numeric_frame(prepared_df[selected_columns])
     if fill_value is not None:
@@ -685,6 +704,8 @@ __all__ = [
     "DEFAULT_EXPECTED_BINS",
     "DEFAULT_HETEROZYGOSITY_COLUMN",
     "DEFAULT_LABEL_COLUMN",
+    "DEFAULT_MEAN_AB_COLUMN",
+    "DEFAULT_MEDIAN_AB_COLUMN",
     "DEFAULT_SAMPLE_ID_COLUMN",
     "build_logistic_regression_pipeline",
     "cross_validate_logistic_regression",
