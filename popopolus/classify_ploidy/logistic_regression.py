@@ -119,6 +119,70 @@ def _resolve_label_order(
     return pd.Index(y_true).append(pd.Index(y_pred)).unique().tolist()
 
 
+def _normalize_and_validate_ploidy_labels(
+    label_df: pd.DataFrame,
+    *,
+    label_column: str,
+) -> pd.DataFrame:
+    """Normalize and validate ploidy labels from user metadata.
+
+    Accepted values are positive integers (e.g. 2, 4, 6) and the explicit
+    missing token "NA" (case-insensitive). Any invalid value (including empty
+    strings, 0, negatives, non-integers, and non-numeric text) is coerced to
+    missing (NA) so downstream handling is consistent.
+    """
+
+    if label_column != DEFAULT_LABEL_COLUMN:
+        return label_df
+
+    normalized_values: list[float] = []
+
+    for sample_id, raw_value in label_df[label_column].items():
+        if isinstance(raw_value, str):
+            stripped_value = raw_value.strip()
+            if stripped_value.upper() == "NA":
+                normalized_values.append(np.nan)
+                continue
+            if stripped_value == "":
+                normalized_values.append(np.nan)
+                continue
+            value_to_parse: Any = stripped_value
+        elif pd.isna(raw_value):
+            # DataFrame inputs may already carry NA values.
+            normalized_values.append(np.nan)
+            continue
+        else:
+            value_to_parse = raw_value
+
+        try:
+            numeric_value = float(value_to_parse)
+        except (TypeError, ValueError):
+            normalized_values.append(np.nan)
+            continue
+
+        if not np.isfinite(numeric_value):
+            normalized_values.append(np.nan)
+            continue
+
+        if not numeric_value.is_integer():
+            normalized_values.append(np.nan)
+            continue
+
+        integer_value = int(numeric_value)
+        if integer_value <= 0:
+            normalized_values.append(np.nan)
+            continue
+
+        normalized_values.append(float(integer_value))
+
+    normalized_label_df = label_df.copy()
+    normalized_label_df[label_column] = pd.Series(
+        normalized_values,
+        index=label_df.index,
+    )
+    return normalized_label_df
+
+
 def _load_label_table(
     sample_sheet: str | Path | pd.DataFrame,
     *,
@@ -128,7 +192,13 @@ def _load_label_table(
     if isinstance(sample_sheet, pd.DataFrame):
         label_df = sample_sheet.copy()
     else:
-        label_df = pd.read_csv(sample_sheet, sep=None, engine="python")
+        label_df = pd.read_csv(
+            sample_sheet,
+            sep=None,
+            engine="python",
+            keep_default_na=False,
+            na_values=[],
+        )
 
     if label_column not in label_df.columns:
         raise ValueError(
@@ -144,7 +214,10 @@ def _load_label_table(
     if sample_id_column is None:
         if label_df.index.is_unique and not isinstance(label_df.index, pd.RangeIndex):
             label_df.index = label_df.index.astype(str).str.strip()
-            return label_df
+            return _normalize_and_validate_ploidy_labels(
+                label_df,
+                label_column=label_column,
+            )
         raise ValueError(
             "Could not infer the sample ID column. Provide a table with a "
             f"'{DEFAULT_SAMPLE_ID_COLUMN}' or 'individual' column."
@@ -152,7 +225,8 @@ def _load_label_table(
 
     label_df = label_df.copy()
     label_df[sample_id_column] = label_df[sample_id_column].astype(str).str.strip()
-    return label_df.set_index(sample_id_column)
+    label_df = label_df.set_index(sample_id_column)
+    return _normalize_and_validate_ploidy_labels(label_df, label_column=label_column)
 
 
 def extract_allele_balance_features(
