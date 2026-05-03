@@ -59,7 +59,11 @@ def cli():
 @click.option('-o', '--output_dir', type=str, default='dummy', required=False,
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
-def classify_ploidy(sample_sheet, vcf_file, output_dir):
+@click.option('-m', '--model', type=str, default=None, required=False,
+              help = 'path to a pre-trained model file (.joblib). When provided, '
+                     'the model is loaded and used for prediction without training.'
+)
+def classify_ploidy(sample_sheet, vcf_file, output_dir, model):
     from popopolus.classify_ploidy.logistic_regression import logistic_regression
 
     start_time = time.process_time()
@@ -68,8 +72,10 @@ def classify_ploidy(sample_sheet, vcf_file, output_dir):
     if (output_dir != 'dummy'):
         check_dir(output_dir)
         logging.info(f'Matrix of allele frequencies for each individual will be written to: {output_dir}')
+    if model is not None:
+        logging.info(f'Using pre-trained model from {model}')
 
-    ploidy_results = logistic_regression(sample_sheet, vcf_file, output_dir)
+    ploidy_results = logistic_regression(sample_sheet, vcf_file, output_dir, model_path=model)
     print(ploidy_results)
     end_time = time.process_time()
     logging.info(f'End at {end_time}')

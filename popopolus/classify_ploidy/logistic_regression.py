@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Sequence
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -440,6 +442,56 @@ def prepare_feature_columns(
     return features, labels
 
 
+def save_model(
+    model: Pipeline,
+    path: str | Path,
+    *,
+    feature_columns: Sequence[str] | None = None,
+) -> Path:
+    """Persist a trained pipeline and its metadata to disk.
+
+    The model is saved as a joblib file.  A companion JSON sidecar
+    (``<stem>.meta.json``) stores the feature column names so that a
+    loaded model can be applied to new data without the caller needing
+    to know which columns were used during training.
+    """
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, path)
+
+    meta: dict[str, Any] = {}
+    if feature_columns is not None:
+        meta["feature_columns"] = list(feature_columns)
+    elif hasattr(model, "feature_names_in_"):
+        meta["feature_columns"] = list(model.feature_names_in_)
+
+    meta_path = path.with_suffix(".meta.json")
+    meta_path.write_text(json.dumps(meta, indent=2))
+    return path
+
+
+def load_model(
+    path: str | Path,
+) -> tuple[Pipeline, list[str] | None]:
+    """Load a previously saved pipeline and optional feature metadata.
+
+    Returns the model and, when available, the list of feature column
+    names that were used during training.
+    """
+
+    path = Path(path)
+    model = joblib.load(path)
+
+    feature_columns: list[str] | None = None
+    meta_path = path.with_suffix(".meta.json")
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text())
+        feature_columns = meta.get("feature_columns")
+
+    return model, feature_columns
+
+
 def build_logistic_regression_pipeline(
     *,
     scale: bool = True,
@@ -709,12 +761,54 @@ def logistic_regression(
     sample_sheet: str | Path | pd.DataFrame,
     vcf_file: str | Path,
     output_dir: str | Path = "dummy",
+    model_path: str | Path | None = None,
 ) -> pd.DataFrame:
-    """Train on labeled samples and predict ploidy from VCF-derived features."""
+    """Train on labeled samples and predict ploidy from VCF-derived features.
+
+    Parameters
+    ----------
+    model_path : str or Path, optional
+        Path to a pre-trained model saved with :func:`save_model`.  When
+        provided the model is loaded from disk and used directly for
+        prediction, skipping training and cross-validation.  When *not*
+        provided, a new model is trained from the labeled samples in
+        *sample_sheet* and saved to *output_dir* (if given).
+    """
 
     feature_df = extract_allele_balance_features(vcf_file)
     label_df = _load_label_table(sample_sheet)
 
+    # ------------------------------------------------------------------
+    # Pre-trained model path supplied – load and predict only
+    # ------------------------------------------------------------------
+    if model_path is not None:
+        model, saved_feature_columns = load_model(model_path)
+
+        prediction_df = generate_predictions(
+            model,
+            feature_df,
+            feature_columns=saved_feature_columns,
+            fill_value=0.0,
+        )
+        prediction_df = prediction_df.rename(columns={"predicted_label": "predicted_ploidy"})
+
+        results_df = feature_df.join(
+            label_df[[DEFAULT_LABEL_COLUMN]].rename(
+                columns={DEFAULT_LABEL_COLUMN: "known_ploidy"}
+            ),
+            how="left",
+        ).join(prediction_df)
+
+        if output_dir != "dummy":
+            output_path = Path(output_dir) / "logistic_regression_predictions.csv"
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            results_df.to_csv(output_path)
+
+        return results_df
+
+    # ------------------------------------------------------------------
+    # No pre-trained model – train from scratch
+    # ------------------------------------------------------------------
     merged_df = feature_df.join(label_df[[DEFAULT_LABEL_COLUMN]], how="left")
     training_df = merged_df[merged_df[DEFAULT_LABEL_COLUMN].notna()].copy()
     if training_df.empty:
@@ -748,10 +842,6 @@ def logistic_regression(
     print(cv_results["confusion_matrix"])
     print("Accuracy Stats:")
     print(cv_results["accuracy_df"])
-    #print(f'Accuracy: {cv_results["accuracy"]}'
-    #      f'Balanced Accuracy: {cv_results["balanced_accuracy"]}'
-    #      f'Macro F1: {cv_results["macro_f1"]}'
-    #      f'Weighted F1: {cv_results["weighted_f1"]}')
     ####
 
     ####
@@ -769,6 +859,11 @@ def logistic_regression(
         accuracy_df_path = Path(output_dir) / "logistic_regression_cv_accuracy.csv"
         accuracy_df_path.parent.mkdir(parents=True, exist_ok=True)
         cv_results["accuracy_df"].to_csv(accuracy_df_path)
+
+        # Save the trained model for future re-use
+        model_save_path = Path(output_dir) / "logistic_regression_model.joblib"
+        save_model(model, model_save_path, feature_columns=list(train_features.columns))
+        print(f"Trained model saved to {model_save_path}")
     ####
 
     return results_df
@@ -787,8 +882,10 @@ __all__ = [
     "extract_allele_balance_features",
     "generate_predictions",
     "get_bin_columns",
+    "load_model",
     "logistic_regression",
     "prepare_feature_columns",
+    "save_model",
     "stratified_train_test_split",
     "train_logistic_regression_model",
 ]
