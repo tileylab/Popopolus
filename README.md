@@ -1,10 +1,10 @@
-# ppgtk
+# Polyploid Population Genomics Tool Kit (ppgtk)
 [![CI](https://github.com/gtiley/ppgtk/actions/workflows/ci-install.yml/badge.svg?branch=main)](https://github.com/gtiley/ppgtk/actions/workflows/ci-install.yml)
 
 Python package for polyploid population genomics analyses and data exploration
 
 ## Disclaimer
-This package is in development and not intended for use.
+This package is in early developmental stages and a lot of functionality and specific commands are still a work in progress. The *classify-ploidy* method does work and has been vetted against several test datasets. Publication of the methods are anticipated in the near future but made available in case it is helpful for some exploratory analyses.
 
 ## Installation
 
@@ -49,4 +49,6 @@ Interpreting the metrics:
 - `weighted_f1` is helpful when you want a single F1 that reflects the dataset's class proportions.
 - The confusion matrix and per-class precision/recall help identify which ploidy levels are being confused by the model.
 
+<!-- 
 When adding or removing features (for example the new `mean_ab` / `median_ab` summaries), re-run cross-validation and compare these artifacts to track improvements or regressions.
+-->

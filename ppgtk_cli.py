@@ -525,69 +525,69 @@ def individual_ab(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_
 
 
 
-@cli.command(context_settings={'help_option_names': ['-h','--help']})
-@click.argument('sample_sheet',type=str)
-@click.option('-v', '--vcf_file', type=str, default='dummy.vcf', required=True,
-              help = 'name of the input vcf file. should not be compressed.'
-)
-@click.option('-i', '--imputation_method', type=str, default='skip', required=False,
-              help = 'Missing-data handling for this command. Only skip is currently supported.'
-)
-@click.option('-d', '--minimum_depth', type=int, default=10, required=False,
-              help = 'The minimum depth of a site to be treated as data'
-)
-@click.option('-c', '--minimum_count', type=int, default=3, required=False,
-              help = 'The minimum count of the minor allele for a site to be treated as data'
-)
-@click.option('-q', '--minimum_quality', type=int, default=40, required=False,
-              help = 'The minimum phred-scaled genotype quality score'
-)
-@click.option('-o', '--output_dir', type=str, default='dummy', required=False,
-              help = 'name of the directory where . will be a matrix of allele frequencies'
-)
-@click.option('-m', '--estimation_method', type=str, default='gmm', required=False,
-              help = 'Method for fitting a model to allele balance data. Only option currently is gmm'
-)
-@click.option('-p', '--ploidy_levels', type=str, default='2,4,6', required=False,
-              help = 'The ploidies you would like to test. Only values between two and six are valid.'
-)
-@click.option('-f', '--pate_flag', type=bool, default=False, required=False,
-              help = 'Is the VCF a product of the PATE pipeline?'
-)
-@click.option('-s', '--minimum_sites', type=int, default=100, required=False,
-              help = 'What are the minimum number of data points needed to fit a mixture model?'
-)
-@click.option('-e', '--model_contraints', type=int, default=2, required=False,
-              help = 'What parameters should be contrained in the model. 0 is none, 1 is means, and 2 is means and weights.'
-)
-def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, estimation_method, ploidy_levels, pate_flag, minimum_sites, model_contraints, output_dir):
-    from ppgtk.utils import map_individuals
-    from ppgtk.utils import check_dir
-    from ppgtk.utils import get_vcf_dimensions
-    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_ab
-    from ppgtk.fit_mixtures.fit_mixtures import est_ploidy
-
-    start_time = time.process_time()
-    logging.info(f'Begin at {start_time}')
-    logging.info(f'Checking all individuals in {sample_sheet} are present in {vcf_file}')
-    ind_map = map_individuals(sample_sheet)
-    logging.info(f'Checking dimensions of VCF')
-    n_sites, n_tax = get_vcf_dimensions(vcf_file, pate_flag, ind_map)
-    logging.info(f'Calculating individual allele frequencies from {vcf_file}')
-    if str(imputation_method).strip().lower() == 'skip':
-        if (output_dir != 'dummy'):
-            check_dir(output_dir)
-            logging.info(f'Matrix of allele frequencies for each individual will be written to: {output_dir}')
-            tax_list, ab_mat = get_ind_ab(n_sites, n_tax, ind_map, vcf_file, minimum_depth, minimum_count, minimum_quality, pate_flag, output_dir)
-            ploidy_df = est_ploidy(tax_list, ab_mat, estimation_method, ploidy_levels, minimum_sites, model_contraints, output_dir)
-            logging.info('Ploidy estimates returned based on Gaussian mixture models')
-            logging.info(ploidy_df.head())
-    else:
-        click.echo(f'Warning: Imputation method {imputation_method} is not supported. Skipping allele frequencies.')
-    end_time = time.process_time()
-    logging.info(f'End at {end_time}')
-    compute_time = (end_time - start_time) / 60
-    logging.info(f'Total compute time was {compute_time} minutes')
+#@cli.command(context_settings={'help_option_names': ['-h','--help']})
+#@click.argument('sample_sheet',type=str)
+#@click.option('-v', '--vcf_file', type=str, default='dummy.vcf', required=True,
+#              help = 'name of the input vcf file. should not be compressed.'
+#)
+#@click.option('-i', '--imputation_method', type=str, default='skip', required=False,
+#              help = 'Missing-data handling for this command. Only skip is currently supported.'
+#)
+#@click.option('-d', '--minimum_depth', type=int, default=10, required=False,
+#              help = 'The minimum depth of a site to be treated as data'
+#)
+#@click.option('-c', '--minimum_count', type=int, default=3, required=False,
+#              help = 'The minimum count of the minor allele for a site to be treated as data'
+#)
+#@click.option('-q', '--minimum_quality', type=int, default=40, required=False,
+#              help = 'The minimum phred-scaled genotype quality score'
+#)
+#@click.option('-o', '--output_dir', type=str, default='dummy', required=False,
+#              help = 'name of the directory where . will be a matrix of allele frequencies'
+#)
+#@click.option('-m', '--estimation_method', type=str, default='gmm', required=False,
+#              help = 'Method for fitting a model to allele balance data. Only option currently is gmm'
+#)
+#@click.option('-p', '--ploidy_levels', type=str, default='2,4,6', required=False,
+#              help = 'The ploidies you would like to test. Only values between two and six are valid.'
+#)
+#@click.option('-f', '--pate_flag', type=bool, default=False, required=False,
+#              help = 'Is the VCF a product of the PATE pipeline?'
+#)
+#@click.option('-s', '--minimum_sites', type=int, default=100, required=False,
+#              help = 'What are the minimum number of data points needed to fit a mixture model?'
+#)
+#@click.option('-e', '--model_contraints', type=int, default=2, required=False,
+#              help = 'What parameters should be contrained in the model. 0 is none, 1 is means, and 2 is means and weights.'
+#)
+#def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, estimation_method, ploidy_levels, pate_flag, minimum_sites, model_contraints, output_dir):
+#    from ppgtk.utils import map_individuals
+#    from ppgtk.utils import check_dir
+#    from ppgtk.utils import get_vcf_dimensions
+#    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_ab
+#    from ppgtk.fit_mixtures.fit_mixtures import est_ploidy
+#
+#    start_time = time.process_time()
+#    logging.info(f'Begin at {start_time}')
+#    logging.info(f'Checking all individuals in {sample_sheet} are present in {vcf_file}')
+#    ind_map = map_individuals(sample_sheet)
+#    logging.info(f'Checking dimensions of VCF')
+#    n_sites, n_tax = get_vcf_dimensions(vcf_file, pate_flag, ind_map)
+#    logging.info(f'Calculating individual allele frequencies from {vcf_file}')
+#    if str(imputation_method).strip().lower() == 'skip':
+#        if (output_dir != 'dummy'):
+#            check_dir(output_dir)
+#            logging.info(f'Matrix of allele frequencies for each individual will be written to: {output_dir}')
+#            tax_list, ab_mat = get_ind_ab(n_sites, n_tax, ind_map, vcf_file, minimum_depth, minimum_count, minimum_quality, pate_flag, output_dir)
+#            ploidy_df = est_ploidy(tax_list, ab_mat, estimation_method, ploidy_levels, minimum_sites, model_contraints, output_dir)
+#            logging.info('Ploidy estimates returned based on Gaussian mixture models')
+#            logging.info(ploidy_df.head())
+#    else:
+#        click.echo(f'Warning: Imputation method {imputation_method} is not supported. Skipping allele frequencies.')
+#    end_time = time.process_time()
+#    logging.info(f'End at {end_time}')
+#    compute_time = (end_time - start_time) / 60
+#    logging.info(f'Total compute time was {compute_time} minutes')
 
 #----------------
 # Population-level allele frequencies
