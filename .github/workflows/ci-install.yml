@@ -38,11 +38,11 @@ jobs:
             python -m pip install pytest pytest-cov
 
       - name: Check help menu
-        run: popopolus --help
+        run: ppgtk --help
 
       - name: Run tests
         run:  |
-          pytest test/ --cov=popopolus --cov-report=xml
+          pytest test/ --cov=ppgtk --cov-report=xml
 
 
   conda-test:
@@ -68,7 +68,7 @@ jobs:
         shell: bash -el {0}
         run: |
           conda env create -f environment.yml
-          conda activate popopolus
+          conda activate ppgtk
           conda install -y "python=${{ matrix.python-version }}"
           pip install .
           pip install pytest pytest-cov
@@ -76,14 +76,14 @@ jobs:
       - name: Check help menu
         shell: bash -el {0}
         run: |
-          conda activate popopolus
-          popopolus --help
+          conda activate ppgtk
+          ppgtk --help
 
       - name: Run tests
         shell: bash -el {0}
         run: |
-          conda activate popopolus
-          pytest test/ --cov=popopolus --cov-report=xml
+          conda activate ppgtk
+          pytest test/ --cov=ppgtk --cov-report=xml
 
 
 
@@ -91,7 +91,7 @@ jobs:
 #      - name: Create an array of the average allele balance in popultions
 #        id: calc-freqs-check
 #        run: |
-#            popopolus calculate_pop_freqs -i tests/freqs/ex.vcf -o tests/freqs/popfreqs.txt tests/freqs/samplesheet
+#            ppgtk calculate_pop_freqs -i tests/freqs/ex.vcf -o tests/freqs/popfreqs.txt tests/freqs/samplesheet
 #            echo "sample output from build"
 #            head tests/freqs/popfreqs.txt
 #            echo "sample expected output"

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from click.testing import CliRunner
 
-from popopolus.conversion.structure import build_structure_matrix, write_structure_file
+from ppgtk.conversion.structure import build_structure_matrix, write_structure_file
 
 
 def _make_site_df(ref_alleles, alt_alleles, chromosomes=None, positions=None):
@@ -132,9 +132,9 @@ def test_write_structure_file_roundtrip(tmp_path):
 
 
 def test_cli_vcf_to_structure_integration(tmp_path, monkeypatch):
-    import popopolus_cli
-    import popopolus.utils as utils_mod
-    from popopolus.calculate_frequencies import calculate_frequencies as calc_freq_mod
+    import ppgtk_cli
+    import ppgtk.utils as utils_mod
+    from ppgtk.calculate_frequencies import calculate_frequencies as calc_freq_mod
 
     runner = CliRunner()
 
@@ -177,7 +177,7 @@ def test_cli_vcf_to_structure_integration(tmp_path, monkeypatch):
 
     output_file = tmp_path / 'output.str'
     result = runner.invoke(
-        popopolus_cli.cli,
+        ppgtk_cli.cli,
         [
             'vcf-to-structure',
             'samples.csv',

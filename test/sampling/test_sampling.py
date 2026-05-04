@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 import pandas as pd
 
-from popopolus.sampling.sampling import rarefy_genotype_dataset
-from popopolus.sampling.sampling import bootstrap_genotype_dataset
-from popopolus.sampling.sampling import summarize_bootstrap_theta
+from ppgtk.sampling.sampling import rarefy_genotype_dataset
+from ppgtk.sampling.sampling import bootstrap_genotype_dataset
+from ppgtk.sampling.sampling import summarize_bootstrap_theta
 
 
 def _build_dummy_genotype_dat(n_sites, n_taxa):

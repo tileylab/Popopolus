@@ -1,10 +1,10 @@
 import numpy as np
 
-from popopolus.diversity_statistics.sfs import initialize_folded_sfs
-from popopolus.diversity_statistics.sfs import initialize_unfolded_sfs
-from popopolus.diversity_statistics.sfs import occupy_folded_sfs
-from popopolus.diversity_statistics.sfs import occupy_unfolded_sfs
-from popopolus.utils import assign_populations
+from ppgtk.diversity_statistics.sfs import initialize_folded_sfs
+from ppgtk.diversity_statistics.sfs import initialize_unfolded_sfs
+from ppgtk.diversity_statistics.sfs import occupy_folded_sfs
+from ppgtk.diversity_statistics.sfs import occupy_unfolded_sfs
+from ppgtk.utils import assign_populations
 
 
 def _build_test_inputs():

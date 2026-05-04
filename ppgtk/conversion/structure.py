@@ -1,6 +1,6 @@
 import numpy as np
 
-from popopolus.utils import assign_populations
+from ppgtk.utils import assign_populations
 
 
 NUCLEOTIDE_CODE = {'A': 1, 'C': 2, 'G': 3, 'T': 4}

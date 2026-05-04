@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 from click.testing import CliRunner
 
-import popopolus_cli
-import popopolus.utils as utils_mod
-from popopolus.calculate_frequencies import calculate_frequencies as calc_freq_mod
+import ppgtk_cli
+import ppgtk.utils as utils_mod
+from ppgtk.calculate_frequencies import calculate_frequencies as calc_freq_mod
 
 
 def test_cli_population_frequencies_integration(tmp_path, monkeypatch):
@@ -49,7 +49,7 @@ def test_cli_population_frequencies_integration(tmp_path, monkeypatch):
 
     out_dir = tmp_path / 'freq_out'
     result = runner.invoke(
-        popopolus_cli.cli,
+        ppgtk_cli.cli,
         [
             'population-frequencies',
             'samples.csv',

@@ -15,9 +15,9 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 Contact: gptiley@ncsu.edu
 -------------------------------------------------------------------------------------------------------------------------------------------
 
-popopolus uses a command-line interface to interact with the popopolus package. A successful installation should allow you to access all functions and their help with:
+ppgtk uses a command-line interface to interact with the ppgtk package. A successful installation should allow you to access all functions and their help with:
 
-popopolus --help
+ppgtk --help
 """
 
 import click
@@ -27,7 +27,7 @@ from datetime import datetime
 import logging
 import pandas as pd
 
-from popopolus.utils import check_dir
+from ppgtk.utils import check_dir
 
 #--------------------------------#
 # CLI ENTRY POINT
@@ -37,8 +37,8 @@ from popopolus.utils import check_dir
 def cli():
     current_time = datetime.now()
     time_string = current_time.strftime('%Y-%m-%d-%H-%M-%S')
-    logfile = time_string + '_popopolus.log'
-    print(f'Start popopolus at {current_time}')
+    logfile = time_string + '_ppgtk.log'
+    print(f'Start ppgtk at {current_time}')
     logging.basicConfig(
        filename = logfile,
        format='%(asctime)s - %(levelname)s - %(message)s',
@@ -64,7 +64,7 @@ def cli():
                      'the model is loaded and used for prediction without training.'
 )
 def classify_ploidy(sample_sheet, vcf_file, output_dir, model):
-    from popopolus.classify_ploidy.logistic_regression import logistic_regression
+    from ppgtk.classify_ploidy.logistic_regression import logistic_regression
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -109,11 +109,11 @@ def classify_ploidy(sample_sheet, vcf_file, output_dir, model):
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
 def individual_genotypes(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.calculate_frequencies.impute import apply_missing_imputation
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.calculate_frequencies.impute import apply_missing_imputation
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -223,18 +223,18 @@ def individual_genotypes(sample_sheet, vcf_file, minimum_depth, minimum_count, m
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
 def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, interval, folded, rarefy, rarefy_replicates, rarefy_seed, rarefy_target_chromosomes, rarefy_relax_exact, bootstrap_replicates, bootstrap_seed, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.calculate_frequencies.impute import apply_missing_imputation
-    from popopolus.diversity_statistics.theta import estimate_thetas
-    from popopolus.sampling.sampling import rarefy_genotype_dataset
-    from popopolus.sampling.sampling import bootstrap_genotype_dataset
-    from popopolus.sampling.sampling import summarize_bootstrap_theta
-    from popopolus.windowing.windowing import parse_interval_spec
-    from popopolus.windowing.windowing import build_windows
-    from popopolus.windowing.windowing import subset_genotype_by_sites
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.calculate_frequencies.impute import apply_missing_imputation
+    from ppgtk.diversity_statistics.theta import estimate_thetas
+    from ppgtk.sampling.sampling import rarefy_genotype_dataset
+    from ppgtk.sampling.sampling import bootstrap_genotype_dataset
+    from ppgtk.sampling.sampling import summarize_bootstrap_theta
+    from ppgtk.windowing.windowing import parse_interval_spec
+    from ppgtk.windowing.windowing import build_windows
+    from ppgtk.windowing.windowing import subset_genotype_by_sites
 
     def run_theta_for_dataset(genotype_data_in, tax_list_in, ind_map_in, site_df_in, output_dir_in):
         """Run theta globally (interval=0) or per genomic window (interval=window:step)."""
@@ -498,10 +498,10 @@ def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
 def individual_ab(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_ab
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_ab
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -525,69 +525,69 @@ def individual_ab(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_
 
 
 
-@cli.command(context_settings={'help_option_names': ['-h','--help']})
-@click.argument('sample_sheet',type=str)
-@click.option('-v', '--vcf_file', type=str, default='dummy.vcf', required=True,
-              help = 'name of the input vcf file. should not be compressed.'
-)
-@click.option('-i', '--imputation_method', type=str, default='skip', required=False,
-              help = 'Missing-data handling for this command. Only skip is currently supported.'
-)
-@click.option('-d', '--minimum_depth', type=int, default=10, required=False,
-              help = 'The minimum depth of a site to be treated as data'
-)
-@click.option('-c', '--minimum_count', type=int, default=3, required=False,
-              help = 'The minimum count of the minor allele for a site to be treated as data'
-)
-@click.option('-q', '--minimum_quality', type=int, default=40, required=False,
-              help = 'The minimum phred-scaled genotype quality score'
-)
-@click.option('-o', '--output_dir', type=str, default='dummy', required=False,
-              help = 'name of the directory where . will be a matrix of allele frequencies'
-)
-@click.option('-m', '--estimation_method', type=str, default='gmm', required=False,
-              help = 'Method for fitting a model to allele balance data. Only option currently is gmm'
-)
-@click.option('-p', '--ploidy_levels', type=str, default='2,4,6', required=False,
-              help = 'The ploidies you would like to test. Only values between two and six are valid.'
-)
-@click.option('-f', '--pate_flag', type=bool, default=False, required=False,
-              help = 'Is the VCF a product of the PATE pipeline?'
-)
-@click.option('-s', '--minimum_sites', type=int, default=100, required=False,
-              help = 'What are the minimum number of data points needed to fit a mixture model?'
-)
-@click.option('-e', '--model_contraints', type=int, default=2, required=False,
-              help = 'What parameters should be contrained in the model. 0 is none, 1 is means, and 2 is means and weights.'
-)
-def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, estimation_method, ploidy_levels, pate_flag, minimum_sites, model_contraints, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_ab
-    from popopolus.fit_mixtures.fit_mixtures import est_ploidy
-
-    start_time = time.process_time()
-    logging.info(f'Begin at {start_time}')
-    logging.info(f'Checking all individuals in {sample_sheet} are present in {vcf_file}')
-    ind_map = map_individuals(sample_sheet)
-    logging.info(f'Checking dimensions of VCF')
-    n_sites, n_tax = get_vcf_dimensions(vcf_file, pate_flag, ind_map)
-    logging.info(f'Calculating individual allele frequencies from {vcf_file}')
-    if str(imputation_method).strip().lower() == 'skip':
-        if (output_dir != 'dummy'):
-            check_dir(output_dir)
-            logging.info(f'Matrix of allele frequencies for each individual will be written to: {output_dir}')
-            tax_list, ab_mat = get_ind_ab(n_sites, n_tax, ind_map, vcf_file, minimum_depth, minimum_count, minimum_quality, pate_flag, output_dir)
-            ploidy_df = est_ploidy(tax_list, ab_mat, estimation_method, ploidy_levels, minimum_sites, model_contraints, output_dir)
-            logging.info('Ploidy estimates returned based on Gaussian mixture models')
-            logging.info(ploidy_df.head())
-    else:
-        click.echo(f'Warning: Imputation method {imputation_method} is not supported. Skipping allele frequencies.')
-    end_time = time.process_time()
-    logging.info(f'End at {end_time}')
-    compute_time = (end_time - start_time) / 60
-    logging.info(f'Total compute time was {compute_time} minutes')
+#@cli.command(context_settings={'help_option_names': ['-h','--help']})
+#@click.argument('sample_sheet',type=str)
+#@click.option('-v', '--vcf_file', type=str, default='dummy.vcf', required=True,
+#              help = 'name of the input vcf file. should not be compressed.'
+#)
+#@click.option('-i', '--imputation_method', type=str, default='skip', required=False,
+#              help = 'Missing-data handling for this command. Only skip is currently supported.'
+#)
+#@click.option('-d', '--minimum_depth', type=int, default=10, required=False,
+#              help = 'The minimum depth of a site to be treated as data'
+#)
+#@click.option('-c', '--minimum_count', type=int, default=3, required=False,
+#              help = 'The minimum count of the minor allele for a site to be treated as data'
+#)
+#@click.option('-q', '--minimum_quality', type=int, default=40, required=False,
+#              help = 'The minimum phred-scaled genotype quality score'
+#)
+#@click.option('-o', '--output_dir', type=str, default='dummy', required=False,
+#              help = 'name of the directory where . will be a matrix of allele frequencies'
+#)
+#@click.option('-m', '--estimation_method', type=str, default='gmm', required=False,
+#              help = 'Method for fitting a model to allele balance data. Only option currently is gmm'
+#)
+#@click.option('-p', '--ploidy_levels', type=str, default='2,4,6', required=False,
+#              help = 'The ploidies you would like to test. Only values between two and six are valid.'
+#)
+#@click.option('-f', '--pate_flag', type=bool, default=False, required=False,
+#              help = 'Is the VCF a product of the PATE pipeline?'
+#)
+#@click.option('-s', '--minimum_sites', type=int, default=100, required=False,
+#              help = 'What are the minimum number of data points needed to fit a mixture model?'
+#)
+#@click.option('-e', '--model_contraints', type=int, default=2, required=False,
+#              help = 'What parameters should be contrained in the model. 0 is none, 1 is means, and 2 is means and weights.'
+#)
+#def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, estimation_method, ploidy_levels, pate_flag, minimum_sites, model_contraints, output_dir):
+#    from ppgtk.utils import map_individuals
+#    from ppgtk.utils import check_dir
+#    from ppgtk.utils import get_vcf_dimensions
+#    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_ab
+#    from ppgtk.fit_mixtures.fit_mixtures import est_ploidy
+#
+#    start_time = time.process_time()
+#    logging.info(f'Begin at {start_time}')
+#    logging.info(f'Checking all individuals in {sample_sheet} are present in {vcf_file}')
+#    ind_map = map_individuals(sample_sheet)
+#    logging.info(f'Checking dimensions of VCF')
+#    n_sites, n_tax = get_vcf_dimensions(vcf_file, pate_flag, ind_map)
+#    logging.info(f'Calculating individual allele frequencies from {vcf_file}')
+#    if str(imputation_method).strip().lower() == 'skip':
+#        if (output_dir != 'dummy'):
+#            check_dir(output_dir)
+#            logging.info(f'Matrix of allele frequencies for each individual will be written to: {output_dir}')
+#            tax_list, ab_mat = get_ind_ab(n_sites, n_tax, ind_map, vcf_file, minimum_depth, minimum_count, minimum_quality, pate_flag, output_dir)
+#            ploidy_df = est_ploidy(tax_list, ab_mat, estimation_method, ploidy_levels, minimum_sites, model_contraints, output_dir)
+#            logging.info('Ploidy estimates returned based on Gaussian mixture models')
+#            logging.info(ploidy_df.head())
+#    else:
+#        click.echo(f'Warning: Imputation method {imputation_method} is not supported. Skipping allele frequencies.')
+#    end_time = time.process_time()
+#    logging.info(f'End at {end_time}')
+#    compute_time = (end_time - start_time) / 60
+#    logging.info(f'Total compute time was {compute_time} minutes')
 
 #----------------
 # Population-level allele frequencies
@@ -616,11 +616,11 @@ def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimu
               help = 'name of the directory where population_frequencies.csv will be written'
 )
 def population_frequencies(sample_sheet, vcf_file, imputation_method, minimum_depth, minimum_count, minimum_quality, pass_flag, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.calculate_frequencies.calculate_frequencies import get_pop_freqs
-    from popopolus.calculate_frequencies.impute import apply_missing_imputation
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_pop_freqs
+    from ppgtk.calculate_frequencies.impute import apply_missing_imputation
 
     start_time = time.process_time()
     ind_map = map_individuals(sample_sheet)
@@ -693,11 +693,11 @@ def population_frequencies(sample_sheet, vcf_file, imputation_method, minimum_de
               help = 'Path for the STRUCTURE-format output file.'
 )
 def vcf_to_structure(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, pass_flag, output_file):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.conversion.structure import build_structure_matrix
-    from popopolus.conversion.structure import write_structure_file
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.conversion.structure import build_structure_matrix
+    from ppgtk.conversion.structure import write_structure_file
 
     start_time = time.process_time()
     ind_map = map_individuals(sample_sheet)

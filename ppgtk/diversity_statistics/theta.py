@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 import logging
-from popopolus.utils import assign_populations
-from popopolus.math import combination
-from popopolus.utils import count_chromosomes
-from popopolus.diversity_statistics.sfs import initialize_unfolded_sfs
-from popopolus.diversity_statistics.sfs import occupy_unfolded_sfs
-from popopolus.diversity_statistics.sfs import initialize_folded_sfs
-from popopolus.diversity_statistics.sfs import occupy_folded_sfs
+from ppgtk.utils import assign_populations
+from ppgtk.math import combination
+from ppgtk.utils import count_chromosomes
+from ppgtk.diversity_statistics.sfs import initialize_unfolded_sfs
+from ppgtk.diversity_statistics.sfs import occupy_unfolded_sfs
+from ppgtk.diversity_statistics.sfs import initialize_folded_sfs
+from ppgtk.diversity_statistics.sfs import occupy_folded_sfs
 
 def estimate_thetas(genotype_dat, tax_list, ind_map, intervals, folded, output_dir):
     '''

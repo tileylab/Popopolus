@@ -1,3 +1,6 @@
+# Other stuff you might want to ignore:
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

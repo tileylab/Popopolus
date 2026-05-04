@@ -1,7 +1,7 @@
 import numpy as np
 
-from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-from popopolus.utils import get_vcf_dimensions
+from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+from ppgtk.utils import get_vcf_dimensions
 
 
 def test_get_vcf_dimensions_respects_pass_flag_string(tmp_path):

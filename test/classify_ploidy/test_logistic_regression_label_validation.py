@@ -1,5 +1,5 @@
 import pandas as pd
-from popopolus.classify_ploidy.logistic_regression import _load_label_table
+from ppgtk.classify_ploidy.logistic_regression import _load_label_table
 
 
 def test_load_label_table_accepts_na_for_unknown_ploidy():
