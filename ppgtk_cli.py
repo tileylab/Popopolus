@@ -15,9 +15,9 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 Contact: gptiley@ncsu.edu
 -------------------------------------------------------------------------------------------------------------------------------------------
 
-popopolus uses a command-line interface to interact with the popopolus package. A successful installation should allow you to access all functions and their help with:
+ppgtk uses a command-line interface to interact with the ppgtk package. A successful installation should allow you to access all functions and their help with:
 
-popopolus --help
+ppgtk --help
 """
 
 import click
@@ -27,7 +27,7 @@ from datetime import datetime
 import logging
 import pandas as pd
 
-from popopolus.utils import check_dir
+from ppgtk.utils import check_dir
 
 #--------------------------------#
 # CLI ENTRY POINT
@@ -37,8 +37,8 @@ from popopolus.utils import check_dir
 def cli():
     current_time = datetime.now()
     time_string = current_time.strftime('%Y-%m-%d-%H-%M-%S')
-    logfile = time_string + '_popopolus.log'
-    print(f'Start popopolus at {current_time}')
+    logfile = time_string + '_ppgtk.log'
+    print(f'Start ppgtk at {current_time}')
     logging.basicConfig(
        filename = logfile,
        format='%(asctime)s - %(levelname)s - %(message)s',
@@ -64,7 +64,7 @@ def cli():
                      'the model is loaded and used for prediction without training.'
 )
 def classify_ploidy(sample_sheet, vcf_file, output_dir, model):
-    from popopolus.classify_ploidy.logistic_regression import logistic_regression
+    from ppgtk.classify_ploidy.logistic_regression import logistic_regression
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -109,11 +109,11 @@ def classify_ploidy(sample_sheet, vcf_file, output_dir, model):
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
 def individual_genotypes(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.calculate_frequencies.impute import apply_missing_imputation
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.calculate_frequencies.impute import apply_missing_imputation
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -223,18 +223,18 @@ def individual_genotypes(sample_sheet, vcf_file, minimum_depth, minimum_count, m
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
 def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, interval, folded, rarefy, rarefy_replicates, rarefy_seed, rarefy_target_chromosomes, rarefy_relax_exact, bootstrap_replicates, bootstrap_seed, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.calculate_frequencies.impute import apply_missing_imputation
-    from popopolus.diversity_statistics.theta import estimate_thetas
-    from popopolus.sampling.sampling import rarefy_genotype_dataset
-    from popopolus.sampling.sampling import bootstrap_genotype_dataset
-    from popopolus.sampling.sampling import summarize_bootstrap_theta
-    from popopolus.windowing.windowing import parse_interval_spec
-    from popopolus.windowing.windowing import build_windows
-    from popopolus.windowing.windowing import subset_genotype_by_sites
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.calculate_frequencies.impute import apply_missing_imputation
+    from ppgtk.diversity_statistics.theta import estimate_thetas
+    from ppgtk.sampling.sampling import rarefy_genotype_dataset
+    from ppgtk.sampling.sampling import bootstrap_genotype_dataset
+    from ppgtk.sampling.sampling import summarize_bootstrap_theta
+    from ppgtk.windowing.windowing import parse_interval_spec
+    from ppgtk.windowing.windowing import build_windows
+    from ppgtk.windowing.windowing import subset_genotype_by_sites
 
     def run_theta_for_dataset(genotype_data_in, tax_list_in, ind_map_in, site_df_in, output_dir_in):
         """Run theta globally (interval=0) or per genomic window (interval=window:step)."""
@@ -498,10 +498,10 @@ def estimate_theta(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum
               help = 'name of the directory where . will be a matrix of allele frequencies'
 )
 def individual_ab(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, pass_flag, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_ab
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_ab
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -561,11 +561,11 @@ def individual_ab(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_
               help = 'What parameters should be contrained in the model. 0 is none, 1 is means, and 2 is means and weights.'
 )
 def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, imputation_method, estimation_method, ploidy_levels, pate_flag, minimum_sites, model_contraints, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import check_dir
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_ab
-    from popopolus.fit_mixtures.fit_mixtures import est_ploidy
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import check_dir
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_ab
+    from ppgtk.fit_mixtures.fit_mixtures import est_ploidy
 
     start_time = time.process_time()
     logging.info(f'Begin at {start_time}')
@@ -616,11 +616,11 @@ def estimate_ploidy(sample_sheet, vcf_file, minimum_depth, minimum_count, minimu
               help = 'name of the directory where population_frequencies.csv will be written'
 )
 def population_frequencies(sample_sheet, vcf_file, imputation_method, minimum_depth, minimum_count, minimum_quality, pass_flag, output_dir):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.calculate_frequencies.calculate_frequencies import get_pop_freqs
-    from popopolus.calculate_frequencies.impute import apply_missing_imputation
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_pop_freqs
+    from ppgtk.calculate_frequencies.impute import apply_missing_imputation
 
     start_time = time.process_time()
     ind_map = map_individuals(sample_sheet)
@@ -693,11 +693,11 @@ def population_frequencies(sample_sheet, vcf_file, imputation_method, minimum_de
               help = 'Path for the STRUCTURE-format output file.'
 )
 def vcf_to_structure(sample_sheet, vcf_file, minimum_depth, minimum_count, minimum_quality, pass_flag, output_file):
-    from popopolus.utils import map_individuals
-    from popopolus.utils import get_vcf_dimensions
-    from popopolus.calculate_frequencies.calculate_frequencies import get_ind_genotypes
-    from popopolus.conversion.structure import build_structure_matrix
-    from popopolus.conversion.structure import write_structure_file
+    from ppgtk.utils import map_individuals
+    from ppgtk.utils import get_vcf_dimensions
+    from ppgtk.calculate_frequencies.calculate_frequencies import get_ind_genotypes
+    from ppgtk.conversion.structure import build_structure_matrix
+    from ppgtk.conversion.structure import write_structure_file
 
     start_time = time.process_time()
     ind_map = map_individuals(sample_sheet)

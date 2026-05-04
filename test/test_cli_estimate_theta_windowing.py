@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from click.testing import CliRunner
 
-import popopolus_cli
-import popopolus.utils as utils_mod
-from popopolus.calculate_frequencies import calculate_frequencies as calc_freq_mod
-from popopolus.diversity_statistics import theta as theta_mod
+import ppgtk_cli
+import ppgtk.utils as utils_mod
+from ppgtk.calculate_frequencies import calculate_frequencies as calc_freq_mod
+from ppgtk.diversity_statistics import theta as theta_mod
 
 
 def test_estimate_theta_windowing_integration(tmp_path, monkeypatch):
@@ -68,7 +68,7 @@ def test_estimate_theta_windowing_integration(tmp_path, monkeypatch):
 
     out_dir = tmp_path / "theta_out"
     result = runner.invoke(
-        popopolus_cli.cli,
+        ppgtk_cli.cli,
         [
             "estimate-theta",
             "samples.csv",
@@ -157,7 +157,7 @@ def test_estimate_theta_bootstrap_only(tmp_path, monkeypatch):
 
     out_dir = tmp_path / "theta_bootstrap_out"
     result = runner.invoke(
-        popopolus_cli.cli,
+        ppgtk_cli.cli,
         [
             "estimate-theta",
             "samples.csv",
@@ -206,7 +206,7 @@ def test_estimate_theta_zero_sites_guardrail(tmp_path, monkeypatch):
 
     out_dir = tmp_path / "theta_zero_sites"
     result = runner.invoke(
-        popopolus_cli.cli,
+        ppgtk_cli.cli,
         [
             "estimate-theta",
             "samples.csv",

@@ -336,7 +336,7 @@ def get_pop_freqs(genotype_dat, tax_list, ind_map, site_df):
     Returns:
         freq_df (pd.DataFrame): wide matrix with populations as rows and locus labels as columns
     '''
-    from popopolus.utils import assign_populations
+    from ppgtk.utils import assign_populations
 
     tax_index = {tax: idx for idx, tax in enumerate(tax_list)}
     populations = assign_populations(ind_map)

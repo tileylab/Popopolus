@@ -1,4 +1,4 @@
-name: popopolus
+name: ppgtk
 channels:
   - conda-forge
   - defaults

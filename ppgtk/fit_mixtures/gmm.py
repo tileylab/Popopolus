@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-from popopolus.fit_mixtures.plot_mixtures import plot_gmm_fit_sklearn
+from ppgtk.fit_mixtures.plot_mixtures import plot_gmm_fit_sklearn
 from sklearn.mixture import GaussianMixture
 from .gmm_fixed_means import GaussianMixtureFixedMeans
 from .gmm_fixed_means_fixed_weights import GaussianMixtureFixedMeansFixedWeights

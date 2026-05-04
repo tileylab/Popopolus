@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import logging
-from popopolus.fit_mixtures.gmm import fit_gmm_to_ab
-from popopolus.fit_mixtures.lmm import fit_mixed_model_ab
+from ppgtk.fit_mixtures.gmm import fit_gmm_to_ab
+from ppgtk.fit_mixtures.lmm import fit_mixed_model_ab
 
 ####
-# Main popopolus function
+# Main ppgtk function
 # Consider moving out to other submodule
 ####
 def est_ploidy(tax_list, ab_dat, method, ploidy_levels, minimum_sites, model_constraints, output_dir):

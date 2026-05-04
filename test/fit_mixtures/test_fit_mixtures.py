@@ -1,7 +1,7 @@
 import numpy as np
 import tempfile
-from popopolus.fit_mixtures.gmm import fit_gmm_to_ab
-from popopolus.fit_mixtures.lmm import fit_mixed_model_ab
+from ppgtk.fit_mixtures.gmm import fit_gmm_to_ab
+from ppgtk.fit_mixtures.lmm import fit_mixed_model_ab
 
 def test_fit_gmm_to_ab():
     """

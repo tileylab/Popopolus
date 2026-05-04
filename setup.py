@@ -6,12 +6,12 @@ with open('README.md','r') as fh:
 setup(
     author="George P. Tiley",
     description="A package for polyploid popoulation genomics analyses and data exploration",
-    name="popopolus",
+    name="ppgtk",
     version="0.1.0",
     license='MIT',
-    url='https://github.com/gtiley/popopolus',
-    py_modules = ['popopolus_cli'],
-    packages=find_packages(include=["popopolus","popopolus.*"]),
+    url='https://github.com/gtiley/ppgtk',
+    py_modules = ['ppgtk_cli'],
+    packages=find_packages(include=["ppgtk","ppgtk.*"]),
     python_requires=">=3.11",
     install_requires=[
         'cyvcf2>=0.31.1',
@@ -25,6 +25,6 @@ setup(
     ],
     entry_points = '''
         [console_scripts]
-        popopolus=popopolus_cli:cli
+        ppgtk=ppgtk_cli:cli
     '''
 )

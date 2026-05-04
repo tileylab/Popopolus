@@ -4,7 +4,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-import popopolus.diversity_statistics.theta as theta_module
+import ppgtk.diversity_statistics.theta as theta_module
 
 
 def _expected_metrics_from_sfs(sfs_row, n_chromosomes):

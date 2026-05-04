@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from popopolus.calculate_frequencies.impute import average_missing
-from popopolus.calculate_frequencies.impute import randomly_impute_missing
-from popopolus.calculate_frequencies.impute import apply_missing_imputation
-from popopolus.calculate_frequencies.impute import remove_missing
+from ppgtk.calculate_frequencies.impute import average_missing
+from ppgtk.calculate_frequencies.impute import randomly_impute_missing
+from ppgtk.calculate_frequencies.impute import apply_missing_imputation
+from ppgtk.calculate_frequencies.impute import remove_missing
 
 
 def test_average_missing_imputes_layer0_by_site_mean():

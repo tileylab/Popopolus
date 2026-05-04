@@ -1,8 +1,8 @@
 from click.testing import CliRunner
 
-import popopolus_cli
-import popopolus.utils as utils_mod
-from popopolus.calculate_frequencies import calculate_frequencies as calc_freq_mod
+import ppgtk_cli
+import ppgtk.utils as utils_mod
+from ppgtk.calculate_frequencies import calculate_frequencies as calc_freq_mod
 
 
 def test_individual_genotypes_cli_integration(monkeypatch):
@@ -39,7 +39,7 @@ def test_individual_genotypes_cli_integration(monkeypatch):
     monkeypatch.setattr(calc_freq_mod, "get_ind_genotypes", fake_get_ind_genotypes)
 
     result = runner.invoke(
-        popopolus_cli.cli,
+        ppgtk_cli.cli,
         [
             "individual-genotypes",
             "samples.csv",

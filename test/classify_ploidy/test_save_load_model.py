@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from popopolus.classify_ploidy.logistic_regression import (
+from ppgtk.classify_ploidy.logistic_regression import (
     build_logistic_regression_pipeline,
     generate_predictions,
     load_model,

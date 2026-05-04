@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from popopolus.utils import assign_populations
+from ppgtk.utils import assign_populations
 
 
 def _population_chromosome_counts(ind_map):

@@ -2,7 +2,7 @@ import numpy as np
 import statsmodels.formula.api as smf
 import pandas as pd
 from scipy.stats import chi2
-from popopolus.fit_mixtures.plot_mixtures import plot_lmm_fit
+from ppgtk.fit_mixtures.plot_mixtures import plot_lmm_fit
 
 ####
 # Fit a linear mixed model to ab as a function of depth to assess model fit

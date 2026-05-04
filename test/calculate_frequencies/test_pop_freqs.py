@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from popopolus.calculate_frequencies.calculate_frequencies import get_pop_freqs
+from ppgtk.calculate_frequencies.calculate_frequencies import get_pop_freqs
 
 
 def _make_genotype_dat(dosage, passing=None):

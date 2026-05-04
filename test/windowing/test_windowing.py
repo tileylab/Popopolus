@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from popopolus.windowing.windowing import parse_interval_spec
-from popopolus.windowing.windowing import build_windows
+from ppgtk.windowing.windowing import parse_interval_spec
+from ppgtk.windowing.windowing import build_windows
 
 
 def test_parse_interval_spec():
