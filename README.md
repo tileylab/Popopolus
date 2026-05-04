@@ -16,7 +16,7 @@ conda activate ppgtk
 The *environment.yml* file was created from the ppgtk development environment with `conda env export --from-history > environment.yml`.
 
 ### Pip Install
-A pip installation can be done system-wide or within a new conda/venv environment. The recommended install path is to install from package metadata so dependency resolution stays platform-aware. This install path is tested on Python 3.11 and 3.12 across Ubuntu, macOS, and Windows.
+A pip installation can be done system-wide or within a new conda/venv environment. The recommended install path is to install from package metadata so dependency resolution stays platform-aware. This install path is tested on Python 3.11 and 3.12 across Ubuntu and macOS. The Windows installation is currently not working due to a limitation of a dependency for reading VCF files, but we are working towards a native parser to allow windows compatibility. If Windows is necessary for you, please submit an issue and it will happen faster.
 
 ```python
 python -m pip install --upgrade pip
@@ -25,6 +25,32 @@ python -m pip install .
 ```
 
 If you need a fully pinned developer environment, `requirements.txt` is still available, but pinned transitive dependencies can be less portable across operating systems.
+
+## Ploidy Classification
+
+The ploidy classification method can be implemented as a single command-line program after successful installation. To bring up the program options, you can look at the help menu:
+
+```bash
+ppgtk classify-ploidy --help
+```
+
+And an example analysis would look like this:
+```bash
+ppgtk classify-ploidy -v input.vcf -o results metadata.csv
+```
+
+Note that the metadata file comes at the end without a flag. This is by design. All commands in **ppgtk** require a metadata file, which has a minimal format. Only three columns are needed:
+```
+individual, population, ploidy
+sample_1, pop_A, 2
+sample_2, pop_A, 2
+sample_3, pop_A, NA
+...
+sample_n, pop_B, 4
+```
+Missing values are accepted for ploidy. Missing values should only be encoded as "NA". Other numbers that are not an expected ploidy will be treated as a seperate class in the regression model. 
+
+The population field is used when calculating population genetic statistics, but it does not matter for the *classify-ploidy* method. If you do not have *a priori* or data-driven population assignments, that is fine. You could simply duplicate the individual names or assign all individuals to a single placeholder population, such as "pop_A".
 
 ## Classifier accuracy metrics
 
