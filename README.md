@@ -1,5 +1,5 @@
 # Polyploid Population Genomics Tool Kit (ppgtk)
-[![CI](https://github.com/gtiley/ppgtk/actions/workflows/ci-install.yml/badge.svg?branch=main)](https://github.com/gtiley/ppgtk/actions/workflows/ci-install.yml)
+[![CI](https://github.com/tileylab/ppgtk/actions/workflows/ci-install.yml/badge.svg?branch=main)](https://github.com/tileylab/ppgtk/actions/workflows/ci-install.yml)
 
 Python package for polyploid population genomics analyses and data exploration
 
